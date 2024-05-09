@@ -35,8 +35,8 @@
   },
   "OMIM": {
     "comment": "OMIM disease annotations",
-  	"url_until_201805": "https://data.omim.org/downloads/nLKYV3qGSpe-HOV8OfliKA/",
-  	"url": "https://data.omim.org/downloads/nLKYV3qGSpe-HOV8OfliKA/",
+  	"url_until_201805": "https://data.omim.org/downloads/",
+  	"url": "https://data.omim.org/downloads/",
   	"targetdir": "annotations",
   	"filename": ["morbidmap.txt", "mimTitles.txt"]
    },
