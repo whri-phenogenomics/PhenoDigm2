@@ -168,7 +168,11 @@ def runDownloads(config):
                                    outdir=nowdir)
         else:
             # If "query" is not present, download individual files            
-            if "filename" in nowset:        
+            if "filename" in nowset:
+                # Fetch the OMIM API from secrets or as a local global variable
+                if nowid == 'OMIM':
+                    secret = os.getenv('OMIM_API_KEY')
+                    nowurl += f'{secret}/' 
                 for f in nowset["filename"]:
                      fetchFromURL(nowurl + f, outdir=nowdir)                                    
         
