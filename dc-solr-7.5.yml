@@ -1,0 +1,22 @@
+version: '3.7'
+services:
+
+  solr:
+    image: rwilsonebi/impc_solr:7.5
+    environment:
+      - VERBOSE="yes"
+    volumes:
+      # For Solr 8 the path changes
+      # - ./solr/solrnewcores:/var/solr/data
+      - ./solrcores7.5:/opt/solr/server/solr/mycores
+    ports:
+      - "8984:8983"
+    networks:
+      phenotypedata:
+        aliases:
+          - searchService
+
+networks:
+  phenotypedata:
+
+ 
