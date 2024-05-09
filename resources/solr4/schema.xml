@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one or more
+ contributor license agreements.  See the NOTICE file distributed with
+ this work for additional information regarding copyright ownership.
+ The ASF licenses this file to You under the Apache License, Version 2.0
+ (the "License"); you may not use this file except in compliance with
+ the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+
+<!-- Phenodigm2 schema -->
+<schema name="phenodigm2" version="1.5">
+ 
+   <!-- Valid attributes for fields:
+     name: mandatory - the name for the field
+     type: mandatory - the name of a field type from the 
+       <types> fieldType section
+     indexed: true if this field should be indexed (searchable or sortable)
+     stored: true if this field should be retrievable
+     docValues: true if this field should have doc values. Doc values are
+       useful for faceting, grouping, sorting and function queries. Although not
+       required, doc values will make the index faster to load, more
+       NRT-friendly and more memory-efficient. They however come with some
+       limitations: they are currently only supported by StrField, UUIDField
+       and all Trie*Fields, and depending on the field type, they might
+       require the field to be single-valued, be required or have a default
+       value (check the documentation of the field type you're interested in
+       for more information)
+     multiValued: true if this field may contain multiple values per document
+     omitNorms: (expert) set to true to omit the norms associated with
+       this field (this disables length normalization and index-time
+       boosting for the field, and saves some memory).  Only full-text
+       fields or fields that need an index-time boost need norms.
+       Norms are omitted for primitive (non-analyzed) types by default.
+     termVectors: [false] set to true to store the term vector for a
+       given field.
+       When using MoreLikeThis, fields used for similarity should be
+       stored for best performance.
+     termPositions: Store position information with the term vector.  
+       This will increase storage costs.
+     termOffsets: Store offset information with the term vector. This 
+       will increase storage costs.
+     required: The field is required.  It will throw an error if the
+       value does not exist
+     default: a value that should be used if no value is specified
+       when adding a document.
+   -->
+   
+
+   
+   <!-- If you remove this field, you must _also_ disable the update log in solrconfig.xml
+      or Solr won't start. _version_ and update log are required for SolrCloud
+   --> 
+   <field name="_version_" type="long" indexed="true" stored="true"/>
+   
+   <!-- points to the root document of a block of nested documents. Required for nested
+      document support, may be removed otherwise      
+      Phenodigm2: not needed
+   -->
+   <!-- <field name="_root_" type="string" indexed="true" stored="false"/> -->
+   
+   <!-- Phenodigm2: field "type" will be present in most or perhaps all documents -->
+   <field name="type" type="string" indexed="true" stored="true"/>
+        
+   <!-- Phenodigm2: diseases -->
+   <field name="disease_id" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="disease_source" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="disease_term" type="text_en_splitting" indexed="true" stored="true"/>
+   <field name="disease_alts" type="text_en_splitting" indexed="true" stored="true" multiValued="true"/>
+   <field name="disease_locus" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="disease_classes" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="disease_phenotypes" type="text_en_splitting" indexed="true" stored="true" multiValued="true"/>
+
+   <!-- Phenodigm2: genes -->
+   <!-- fields gene_* refer to mouse genes, fields hgnc_gene_* refer to human genes -->
+   <field name="gene_id" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="gene_symbol" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="gene_symbols_withdrawn" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="gene_locus" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="hgnc_gene_id" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="hgnc_gene_symbol" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="hgnc_gene_symbols_withdrawn" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="hgnc_gene_locus" type="string" indexed="true" stored="true" multiValued="false"/>
+   
+   <field name="mouse_model" type="boolean" indexed="true" stored="true" />
+   <field name="impc_model" type="boolean" indexed="true" stored="true" />
+   
+   <!-- Phenodigm2: models -->
+   <field name="model_id" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="model_source" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="model_description" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="model_genetic_background" type="string" indexed="true" stored="true" multiValued="false"/>      
+   <field name="marker_id" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="marker_symbol" type="string" indexed="true" stored="true" multiValued="false"/>     
+   <field name="marker_locus" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="marker_num_models" type="int" indexed="true" stored="true" />
+   <field name="model_phenotypes" type="text_en_splitting" indexed="true" stored="true" multiValued="true"/>
+   
+   <!-- Phenodigm2: ontology/phenotypes -->
+   <field name="ontology" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="phenotype_id" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="phenotype_term" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="phenotype_synonym" type="string" indexed="true" stored="true" multiValued="true" />   
+   
+   <!-- Phenodigm2: cross-ontology links -->
+   <field name="hp_id" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="hp_term" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="mp_id" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="mp_term" type="string" indexed="true" stored="true" multiValued="false" />
+      
+   <!-- Phenodigm2: disease-gene links -->
+   <field name="association_curated" type="boolean" indexed="true" stored="true" multiValued="false" />
+   <field name="association_ortholog" type="boolean" indexed="true" stored="true" multiValued="false" />
+   <field name="marker_symbols_withdrawn" type="string" indexed="true" stored="true" multiValued="true"/>
+   
+   <!-- Phenodigm2: disease-model links -->
+   <field name="disease_matched_phenotypes" type="string" indexed="true" stored="true" multiValued="true" />
+   <field name="model_matched_phenotypes" type="string" indexed="true" stored="true" multiValued="true" />
+   <field name="disease_model_avg_raw" type="double" indexed="true" stored="true" />
+   <field name="disease_model_avg_norm" type="double" indexed="true" stored="true" />
+   <field name="disease_model_max_raw" type="double" indexed="true" stored="true" />
+   <field name="disease_model_max_norm" type="double" indexed="true" stored="true" />
+   
+   <!-- Phenodigm2: disease-search -->
+   <field name="search_qf" type="text_ngram" indexed="true" stored="true" multiValued="true" />
+   <field name="human_curated_gene" type="boolean" indexed="true" stored="true" multiValued="false" />
+   <field name="impc_model_with_curated_gene" type="boolean" indexed="true" stored="true" multiValued="false" />
+   <field name="mgi_model_with_curated_gene" type="boolean" indexed="true" stored="true" multiValued="false" />
+   <field name="impc_model_with_computed_association" type="boolean" indexed="true" stored="true" multiValued="false" />
+   <field name="mgi_model_with_computed_association" type="boolean" indexed="true" stored="true" multiValued="false" />
+   
+   
+   <!-- Common metadata fields, named specifically to match up with
+     SolrCell metadata when parsing rich documents such as Word, PDF.
+     Some fields are multiValued only because Tika currently may return
+     multiple values for them. Some metadata is parsed from the documents,
+     but there are some which come from the client context:
+       "content_type": From the HTTP headers of incoming stream
+       "resourcename": From SolrCell request param resource.name
+   -->
+   <!--
+   <field name="title" type="text_general" indexed="true" stored="true" multiValued="true"/>
+   <field name="subject" type="text_general" indexed="true" stored="true"/>
+   <field name="description" type="text_general" indexed="true" stored="true"/>
+   <field name="comments" type="text_general" indexed="true" stored="true"/>
+   <field name="author" type="text_general" indexed="true" stored="true"/>
+   <field name="keywords" type="text_general" indexed="true" stored="true"/>
+   <field name="category" type="text_general" indexed="true" stored="true"/>
+   <field name="resourcename" type="text_general" indexed="true" stored="true"/>
+   <field name="url" type="text_general" indexed="true" stored="true"/>
+   <field name="content_type" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="last_modified" type="date" indexed="true" stored="true"/>
+   <field name="links" type="string" indexed="true" stored="true" multiValued="true"/>
+   -->
+  
+   <!-- catchall field, containing all other searchable text fields (implemented
+        via copyField further on in this schema  -->
+   <field name="text" type="text_general" indexed="true" stored="false" multiValued="true"/>
+      
+   <!-- Only remove the "id" field if you have a very good reason to. While not strictly
+     required, it is highly recommended. A <uniqueKey> is present in almost all Solr 
+     installations. See the <uniqueKey> declaration below where <uniqueKey> is set to "id".
+   -->
+   <!-- Phenodigm2: id field not needed -->   
+   <!-- <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" /> --> 
+
+   
+   <!-- Dynamic field definitions allow using convention over configuration
+       for fields via the specification of patterns to match field names. 
+       EXAMPLE:  name="*_i" will match any field ending in _i (like myid_i, z_i)
+       RESTRICTION: the glob-like pattern in the name attribute must have
+       a "*" only at the start or the end.  -->
+   <!-- Phenodigm2: no dynamic fields -->
+   
+      
+   
+   <!-- Field to use to determine and enforce document uniqueness. 
+      Unless this field is marked with required="false", it will be a required field
+   -->
+   <!-- Phenodigm2: avoid unique key, 
+    	Documents are identified by type and other fields -->
+   <!-- <uniqueKey>id</uniqueKey> -->
+
+
+
+  <!-- copyField commands copy one field to another at the time a document
+        is added to the index.  It's used either to index the same field differently,
+        or to add multiple fields to the same field for easier/faster searching.  -->
+   <copyField source="disease_id" dest="text"/>
+   <copyField source="disease_source" dest="text"/>
+   <copyField source="disease_term" dest="text"/>
+   <copyField source="disease_locus" dest="text"/>
+   <copyField source="disease_alts" dest="text"/>
+   <copyField source="disease_classes" dest="text"/>
+   <copyField source="disease_phenotypes" dest="text"/>      
+   <copyField source="gene_id" dest="text"/>
+   <copyField source="gene_symbol" dest="text"/>
+   <copyField source="gene_symbols_withdrawn" dest="text"/>
+   <copyField source="marker_id" dest="text"/>
+   <copyField source="marker_symbol" dest="text"/>   
+   <copyField source="model_phenotypes" dest="text"/>
+   <copyField source="model_description" dest="text"/>
+   <copyField source="hgnc_gene_id" dest="text"/>
+   <copyField source="hgnc_gene_symbol" dest="text"/>
+   <copyField source="hgnc_gene_symbols_withdrawn" dest="text"/>  
+   <copyField source="hgnc_gene_locus" dest="text"/>
+   <copyField source="phenotype_id" dest="text"/>
+   <copyField source="phenotype_term" dest="text"/>
+   <copyField source="phenotype_synonym" dest="text"/>
+   <copyField source="search_qf" dest="text"/>   
+  
+    
+    <!-- field type definitions. The "name" attribute is
+       just a label to be used by field definitions.  The "class"
+       attribute and any other attributes determine the real
+       behavior of the fieldType.
+         Class names starting with "solr" refer to java classes in a
+       standard package such as org.apache.solr.analysis
+    -->
+
+	<!-- Phenodigm2: version 1 had an extra field type here -->
+    <fieldType name="uuid" class="solr.UUIDField" indexed="true" />
+    
+    <!-- The StrField type is not analyzed, but indexed/stored verbatim.
+       It supports doc values but in that case the field needs to be
+       single-valued and either required or have a default value.
+      -->
+    <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
+
+    <!-- boolean type: "true" or "false" -->
+    <fieldType name="boolean" class="solr.BoolField" sortMissingLast="true"/>
+
+     
+    <!--
+      Default numeric field types. For faster range queries, consider the tint/tfloat/tlong/tdouble types.
+
+      These fields support doc values, but they require the field to be
+      single-valued and either be required or have a default value.
+    -->
+    <fieldType name="int" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="float" class="solr.TrieFloatField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="double" class="solr.TrieDoubleField" precisionStep="0" positionIncrementGap="0"/>
+
+    <!--
+     Numeric field types that index each value at various levels of precision
+     to accelerate range queries when the number of values between the range
+     endpoints is large. See the javadoc for NumericRangeQuery for internal
+     implementation details.
+
+     Smaller precisionStep values (specified in bits) will lead to more tokens
+     indexed per value, slightly larger index size, and faster range queries.
+     A precisionStep of 0 disables indexing at different precision levels.
+    -->
+    <fieldType name="tint" class="solr.TrieIntField" precisionStep="8" positionIncrementGap="0"/>
+    <fieldType name="tfloat" class="solr.TrieFloatField" precisionStep="8" positionIncrementGap="0"/>
+    <fieldType name="tlong" class="solr.TrieLongField" precisionStep="8" positionIncrementGap="0"/>
+    <fieldType name="tdouble" class="solr.TrieDoubleField" precisionStep="8" positionIncrementGap="0"/>
+
+    <!-- The format for this date field is of the form 1995-12-31T23:59:59Z, and
+         is a more restricted form of the canonical representation of dateTime
+         http://www.w3.org/TR/xmlschema-2/#dateTime    
+         The trailing "Z" designates UTC time and is mandatory.
+         Optional fractional seconds are allowed: 1995-12-31T23:59:59.999Z
+         All other components are mandatory.
+
+         Expressions can also be used to denote calculations that should be
+         performed relative to "NOW" to determine the value, ie...
+
+               NOW/HOUR
+                  ... Round to the start of the current hour
+               NOW-1DAY
+                  ... Exactly 1 day prior to now
+               NOW/DAY+6MONTHS+3DAYS
+                  ... 6 months and 3 days in the future from the start of
+                      the current day
+                      
+         Consult the DateField javadocs for more information.
+
+         Note: For faster range queries, consider the tdate type
+      -->
+    <fieldType name="date" class="solr.TrieDateField" precisionStep="0" positionIncrementGap="0"/>
+
+    <!-- A Trie based date field for faster date range queries and date faceting. -->
+    <fieldType name="tdate" class="solr.TrieDateField" precisionStep="6" positionIncrementGap="0"/>
+
+    <!--Binary data type. The data should be sent/retrieved in as Base64 encoded Strings -->
+    <fieldtype name="binary" class="solr.BinaryField"/>
+       
+    <!-- A general text field that has reasonable, generic
+         cross-language defaults: it tokenizes with StandardTokenizer,
+	 removes stop words from case-insensitive "stopwords.txt"
+	 (empty by default), and down cases.  At query time only, it
+	 also applies synonyms. -->
+    <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100">
+      <analyzer type="index">
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" />
+        <!-- in this example, we will only use synonyms at query time
+        <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
+        -->
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+      <analyzer type="query">
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" />
+        <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+    </fieldType>
+
+	<!-- for fields searchable using ngrams (for search) -->
+    <fieldType name="text_ngram" class="solr.TextField">
+        <analyzer type="index">
+            <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+            <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
+            <filter class="solr.EdgeNGramFilterFactory" minGramSize="1" maxGramSize="100"/>
+            <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true" />
+        </analyzer>
+        <analyzer type="query">
+            <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+            <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>           
+            <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
+        </analyzer>
+    </fieldType>
+
+    <!-- A text field with defaults appropriate for English, plus
+	 aggressive word-splitting and autophrase features enabled.
+	 This field is just like text_en, except it adds
+	 WordDelimiterFilter to enable splitting and matching of
+	 words on case-change, alpha numeric boundaries, and
+	 non-alphanumeric chars.  This means certain compound word
+	 cases will work, for example query "wi fi" will match
+	 document "WiFi" or "wi-fi".
+        -->
+    <fieldType name="text_en_splitting" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="true">
+      <analyzer type="index">
+        <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+        <!-- in this example, we will only use synonyms at query time
+        <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
+        -->
+        <!-- Case insensitive stop word removal.
+        -->
+        <filter class="solr.StopFilterFactory"
+                ignoreCase="true"
+                words="stopwords_en.txt"
+                />
+        <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="1" catenateNumbers="1" catenateAll="0" splitOnCaseChange="1"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+        <filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt"/>
+        <filter class="solr.PorterStemFilterFactory"/>
+      </analyzer>
+      <analyzer type="query">
+        <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+        <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+        <filter class="solr.StopFilterFactory"
+                ignoreCase="true"
+                words="stopwords_en.txt"
+                />
+        <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0" splitOnCaseChange="1"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+        <filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt"/>
+        <filter class="solr.PorterStemFilterFactory"/>
+      </analyzer>
+    </fieldType>
+  
+
+    <!-- since fields of this type are by default not stored or indexed,
+         any data added to them will be ignored outright.  --> 
+    <fieldtype name="ignored" stored="false" indexed="false" multiValued="true" class="solr.StrField" />
+
+
+</schema>

@@ -1,0 +1,93 @@
+{   
+  "disease": {
+  	"fields": ["id TEXT UNIQUE", "term TEXT", "alts TEXT", "class TEXT"],
+  	"indexes": { "d_i": "id" }  	
+  },
+  
+  "disease_phenotype": {
+    "fields": ["id TEXT", "phenotype TEXT"],
+    "indexes": { "dp_i_p": "id, phenotype" }
+  },
+  
+  "disease_gene_mapping": {
+    "fields": ["query TEXT", "match TEXT", "locus TEXT", "source TEXT"],
+    "indexes": { "dgm": "query, match"}
+  },
+
+  "model": {
+    "fields": ["id TEXT UNIQUE", "source TEXT", "species TEXT", 
+    			"genetic_background TEXT", "life_stage TEXT", "description TEXT"],
+    "indexes": { "m_i": "id" }    
+  },
+  
+  "model_genotype": {
+    "fields": ["id TEXT", "gene_id TEXT", "description TEXT"],     
+    "indexes": { "mg_i": "id"}    
+  },
+    
+  "model_phenotype": {
+    "fields": ["id INTEGER", "phenotype TEXT"],
+    "indexes": { "mp_i_p": "id, phenotype"}
+  },
+
+  "ontology": {
+    "fields": ["id TEXT UNIQUE", "term TEXT"],
+    "indexes": { "o_i": "id"}
+  }, 
+  
+  "ontology_synonym": {
+    "fields": ["id TEXT", "synonym TEXT"],
+    "indexes": { "os_i": "id"}
+  }, 
+  
+  "ontology_ontology_mapping": {
+    "fields": ["query TEXT", "match TEXT", 
+    			"simJ REAL", "ic REAL", "lcs TEXT"],
+    "indexes": { "oom_qm": "query, match"}
+  },
+
+  "disease_disease_association": {
+    "fields": ["query TEXT", "match TEXT",
+               "score_avg_norm REAL", "score_avg_raw REAL",
+    		   "score_max_norm REAL", "score_max_raw REAL",               
+               "query_phenotype TEXT", "match_phenotype TEXT"],
+    "indexes": { "dda_q": "query" }
+  }, 
+          
+  "model_model_association": {
+    "fields": ["query TEXT", "match TEXT", 
+               "score_avg_norm REAL", "score_avg_raw REAL",
+    		   "score_max_norm REAL", "score_max_raw REAL",               
+               "query_phenotype TEXT", "match_phenotype TEXT"],               
+    "indexes": { "mma_q": "query" }
+  },
+
+  "model_disease_association": {
+  	"fields": ["query TEXT", "match TEXT",
+               "score_avg_norm REAL", "score_avg_raw REAL",
+    		   "score_max_norm REAL", "score_max_raw REAL",               
+               "query_phenotype TEXT", "match_phenotype TEXT"],
+    "indexes": { "mda_q": "query" }
+  },
+
+  "disease_model_association": {
+    "fields": ["query TEXT", "match TEXT",  
+               "score_avg_norm REAL", "score_avg_raw REAL",
+    		   "score_max_norm REAL", "score_max_raw REAL",               
+               "query_phenotype TEXT", "match_phenotype TEXT"],               
+    "indexes": { "dma_q": "query" }
+  },
+
+  "gene": {
+    "fields": ["id TEXT", "organism TEXT", "symbol TEXT", 
+               "name TEXT", "altname TEXT", "type TEXT",
+               "locus TEXT", "withdrawn INT"],
+    "indexes": { "g_i": "id" }
+  },
+  
+  "gene_gene_mapping": {
+    "fields": ["query TEXT", "match TEXT"],
+    "indexes": { "go_q": "query" }
+  }
+
+}

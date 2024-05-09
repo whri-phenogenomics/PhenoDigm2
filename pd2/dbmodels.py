@@ -102,6 +102,9 @@ class PhenodigmTable:
         
         herefields = ", ".join(self.fieldnames)
         sql = "SELECT "+herefields+" FROM "+self.tabname
+
+    def __repr__(self):
+        return f"{self.data}"
         
 
 class PhenodigmSimpleGenerator:
@@ -261,6 +264,7 @@ class ModelDiseaseUpdate(PhenodigmTable):
     """An unusual model in this series. Checks if a given 
     id is present in the disease table, and adds if not present."""
 
+    # Is this a problem? Does the behaviour change unfavourably if fixed?
     fielnames = ["id", "term"]
     checksql = "SELECT COUNT(id) FROM disease where id=?"
     insertsql = "INSERT INTO disease (id, term) VALUES (?, ?)"

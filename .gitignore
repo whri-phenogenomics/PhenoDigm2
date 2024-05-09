@@ -1,0 +1,42 @@
+# ignore all data downloads
+data/annotations
+data/obo
+data/*owl
+data/*xml
+
+
+# ignore local files (IDE)
+.project
+.pydevproject
+.idea
+*.iml
+
+
+# ignore databases and solr cores
+v*
+v*/*
+solrcores*
+solrcores*/*
+
+
+# ignore temporary data
+temp
+temp/*
+*read-only
+*read-only*
+aws
+aws/*
+
+
+# ignore python compiled code and job logs
+*pyc
+*/*pyc
+*/*/*pyc
+venv/*
+
+
+# ignore dockerfiles
+Dockerfile
+
+# ignore test_practice file
+test_practice*.py

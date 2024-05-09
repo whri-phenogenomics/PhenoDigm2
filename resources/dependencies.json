@@ -1,0 +1,104 @@
+{ 
+  "ontologies": {
+    "comment": "Ontologies", 
+  	"url": "http://purl.obolibrary.org/obo/",
+  	"targetdir": "obo",
+  	"filename": ["hp.obo", "mp.obo", "doid.obo"]	  	
+   },
+  "IMPC_sr": {
+  	"comment": "IMPC statistical results via live www",
+	"query": [""],
+  	"url": "http://www.ebi.ac.uk/mi/impc/solr/statistical-result/select?q=*:*&wt=csv&rows=20000000&fl=resource_name,strain_name,marker_accession_id,marker_symbol,allele_accession_id,allele_symbol,zygosity,mp_term_id,mp_term_name,p_value,life_stage_acc,life_stage_name",
+  	"targetdir": "annotations",
+  	"filename": ["IMPC_ALL_statistical_results.csv"]
+  },
+  "IMPC_gp": {
+	"comment": "IMPC phenotype annotations via live www",
+    "query": [""],
+	"url": "http://www.ebi.ac.uk/mi/impc/solr/genotype-phenotype/select?q=*:*&wt=csv&rows=20000000&fl=resource_name,strain_name,marker_accession_id,marker_symbol,allele_accession_id,allele_symbol,zygosity,mp_term_id,mp_term_name,p_value,life_stage_acc,life_stage_name",
+	"targetdir": "annotations",
+	"filename": ["IMPC_ALL_genotype_phenotype.csv"]
+  },
+  "IMPCdev_sr": {
+    "comment": "Mouse statistical results via dev",
+    "query": [""],
+  	"url": "http://wwwdev.ebi.ac.uk/mi/impc/dev/solr/statistical-result/select?q=*:*&wt=csv&rows=20000000&fl=resource_name,strain_name,marker_accession_id,marker_symbol,allele_accession_id,allele_symbol,zygosity,mp_term_id,mp_term_name,p_value,life_stage_acc,life_stage_name",
+  	"targetdir": "annotations",  	
+  	"filename": ["IMPC_ALL_statistical_results_dev.csv"]
+  },
+  "IMPCdev_gp": {
+    "comment": "Mouse phenotype annotations via dev",
+    "query": [""],
+  	"url": "http://wwwdev.ebi.ac.uk/mi/impc/dev/solr/genotype-phenotype/select?q=*:*&wt=csv&rows=20000000&fl=resource_name,strain_name,marker_accession_id,marker_symbol,allele_accession_id,allele_symbol,zygosity,mp_term_id,mp_term_name,p_value,life_stage_acc,life_stage_name",
+  	"targetdir": "annotations",  	
+  	"filename": ["IMPC_ALL_genotype_phenotype_dev.csv"]
+  },
+  "OMIM": {
+    "comment": "OMIM disease annotations",
+  	"url_until_201805": "https://data.omim.org/downloads/nLKYV3qGSpe-HOV8OfliKA/",
+  	"url": "https://data.omim.org/downloads/nLKYV3qGSpe-HOV8OfliKA/",
+  	"targetdir": "annotations",
+  	"filename": ["morbidmap.txt", "mimTitles.txt"]
+   },
+  "OMIMfree": {
+    "comment": "OMIM disease annotations",
+  	"url": "https://omim.org/static/omim/data/",
+  	"targetdir": "annotations",
+  	"filename": ["mim2gene.txt"]
+   },
+  "JAX": {
+    "comment": "Misc genotype-phenotype associations",
+  	"url": "http://www.informatics.jax.org/downloads/reports/",
+  	"targetdir": "annotations",
+  	"filename": ["HOM_MouseHumanSequence.rpt", 
+  	  			"MGI_GenePheno.rpt",
+        		"MGI_PhenotypicAllele.rpt", 
+        		"MGI_Geno_DiseaseDO.rpt",
+        		"MGI_EntrezGene.rpt",
+        		"MGI_PhenoGenoMP.rpt",
+        		"MGI_DO.rpt"]  	  	
+  },
+  "Orphanet": {
+    "comment": "ORPHANET annotations",
+  	"url": "http://www.orphadata.org/data/xml/",
+  	"targetdir": "annotations",
+    "filename": ["en_product6.xml", "en_product1.xml",
+    	"en_product3_146.xml", "en_product3_147.xml",
+    	"en_product3_148.xml", "en_product3_149.xml", 
+    	"en_product3_150.xml", "en_product3_152.xml",
+    	"en_product3_151.xml",
+    	"en_product3_156.xml", "en_product3_181.xml",
+    	"en_product3_182.xml", "en_product3_183.xml",
+    	"en_product3_184.xml", "en_product3_185.xml",
+    	"en_product3_186.xml", "en_product3_187.xml",
+    	"en_product3_188.xml", "en_product3_189.xml",
+    	"en_product3_193.xml", "en_product3_194.xml",
+    	"en_product3_195.xml", "en_product3_196.xml",
+    	"en_product3_197.xml", "en_product3_198.xml",
+    	"en_product3_199.xml", "en_product3_200.xml",
+    	"en_product3_201.xml", "en_product3_202.xml",
+    	"en_product3_203.xml", "en_product3_204.xml",
+    	"en_product3_205.xml", "en_product3_209.xml",
+    	"en_product3_212.xml", "en_product3_216.xml",    	
+    	"en_product3_231.xml"]
+  },
+  "hpoa": {
+    "comment": "HPO genotype-phenotype associations",
+    "url": "http://purl.obolibrary.org/obo/hp/hpoa/",
+    "targetdir": "annotations",
+    "filename": ["phenotype.hpoa"]
+  },
+  "HGNC": {
+    "comment": "Human gene identifiers",
+    "url": "http://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/",
+    "targetdir": "annotations",
+    "filename": ["hgnc_complete_set.txt", "withdrawn.txt"]
+  },  
+  "bioMart": {
+    "comment": "Generic gene annotations from bioMart",
+    "query": ["human_mouse_mapping"],
+  	"url": "http://www.ensembl.org/biomart/martservice?query=",
+  	"targetdir": "annotations",  	
+  	"filename": [""]
+  }
+}

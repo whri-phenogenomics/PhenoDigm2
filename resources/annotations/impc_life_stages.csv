@@ -1,0 +1,9 @@
+life_stage_name	life_stage_acc	life_stage_group
+E9.5	IMPCLS:0001	embryo
+E12.5	IMPCLS:0002	embryo
+E15.5	IMPCLS:0003	embryo
+E18.5	IMPCLS:0004	embryo
+Early adult	IMPCLS:0005	early
+Middle aged adult	IMPCLS:0006	middle
+Late adult	IMPCLS:0007	late
+NA	IMPCLS:0000	na

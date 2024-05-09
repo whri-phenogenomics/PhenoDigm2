@@ -176,7 +176,7 @@ def runDownloads(config):
     catalog_file = join(resourcesdir, "catalog.xml")
     catalog_data = XML.parse(catalog_file)    
             
-    for xmlnode in catalog_data.getroot().getchildren():
+    for xmlnode in list(catalog_data.getroot()):
         if xmlnode.tag.endswith("uri"):
             nowurl = xmlnode.attrib["name"]
             nowfile = xmlnode.attrib["uri"]
