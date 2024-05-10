@@ -40,3 +40,6 @@ Dockerfile
 
 # ignore test_practice file
 test_practice*.py
+
+# ignore coverage files
+.coverage
