@@ -213,6 +213,9 @@ def mock_run_downloads_dependencies(monkeypatch, mock_pd2dirs):
 
     return rootdir, datadir, resourcesdir, dbdir
 
+# TODO: write tests for the OMIM exception
+# TODO: write tests to check the secret API key
+
 
 # Test to check contents of dependencies.json are downloaded correctly
 def test_run_downloads(mock_run_downloads_dependencies, mock_pd2dirs):
