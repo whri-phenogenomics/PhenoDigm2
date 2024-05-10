@@ -40,7 +40,7 @@ Test that owltools is available and working.
 
 ### Python environment
 
-The `phenodigm2` program runs using python (tested with versions 3.6 and 3.7). 
+The `phenodigm2` program runs using python (tested with versions 3.6, 3.7, and 3.8). 
 
 Set up a new python environment (here called `venv`), activate it, and install required packages. At the end, deactivate the environment. 
 
