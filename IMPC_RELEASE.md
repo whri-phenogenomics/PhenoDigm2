@@ -89,9 +89,11 @@ cp -r /code/PhenoDigm2/resources vTODAY/
 
 Activate the python environment. Then download all the required raw data (IMPC, MGI, obofoundry, HGNC, Ensemble, OMIM, ORPHANET).
 
+**NOTE**: To download OMIM data we require an OMIM API key. This can be passed as a local global variable: `OMIM_API_KEY`. If no key/invalid key is passed, morbidmap and mimTitle and  will contain an error. 
 ```
 cd /data/PhenoDigm2/
 source venv/bin/activate
+export OMIM_API_KEY="<your_key_here>"
 python3 /code/PhenoDigm2/phenodigm2.py download --db vTODAY
 ```
 
