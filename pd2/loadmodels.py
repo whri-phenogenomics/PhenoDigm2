@@ -334,7 +334,7 @@ def loadMGIMouseModelData(db_file, anno_dir, headers_dir, db_dir):
     titleindex = header.index("Marker_Symbol")
     statusindex = header.index("Status")
     
-    with gzip.open(file_genes, "rt") as f:
+    with gzip.open(file_genes, "rt", encoding="utf-8") as f:
         reader = csv.reader(f, delimiter="\t", quotechar="\"")
         for fields in reader:
             nowindex = fields[geneindex].strip()

@@ -40,7 +40,7 @@ Test that owltools is available and working.
 
 ### Python environment
 
-The `phenodigm2` program runs using python (tested with versions 3.6, 3.7, and 3.8). 
+The `phenodigm2` program runs using python (tested with versions 3.6 and 3.7). 
 
 Set up a new python environment (here called `venv`), activate it, and install required packages. At the end, deactivate the environment. 
 
@@ -89,11 +89,9 @@ cp -r /code/PhenoDigm2/resources vTODAY/
 
 Activate the python environment. Then download all the required raw data (IMPC, MGI, obofoundry, HGNC, Ensemble, OMIM, ORPHANET).
 
-**NOTE**: To download OMIM data we require an OMIM API key. This can be passed as a local global variable: `OMIM_API_KEY`. If no key/invalid key is passed, morbidmap and mimTitle and  will contain an error. 
 ```
 cd /data/PhenoDigm2/
 source venv/bin/activate
-export OMIM_API_KEY="<your_key_here>"
 python3 /code/PhenoDigm2/phenodigm2.py download --db vTODAY
 ```
 
@@ -174,7 +172,6 @@ python3 /code/PhenoDigm2/phenodigm2 solr \
 Once the data is transfered into solr, check that it is accessible. Some example queries are below.
 
 ```
-curl 'localhost:8984/solr/phenodigm/select?q=*:*&rows=0&facet=true&facet.field=type'
 curl 'localhost:8984/solr/phenodigm/select?q=*:*&rows=2'
 curl 'localhost:8984/solr/phenodigm/select?q=type:gene&rows=2'
 curl 'localhost:8984/solr/phenodigm/select?q=type:gene_gene&rows=2'
@@ -182,7 +179,6 @@ curl 'localhost:8984/solr/phenodigm/select?q=type:ontology&rows=2'
 curl 'localhost:8984/solr/phenodigm/select?q=type:disease_gene_summary&rows=2'
 curl 'localhost:8984/solr/phenodigm/select?q=type:disease_model_summary&rows=2'
 curl 'localhost:8984/solr/phenodigm/select?q=type:disease_search&rows=2'
-curl 'localhost:8984/solr/phenodigm/select?q=type:disease_model_summary%20AND%20marker_id:"MGI:1919819"&rows=1'
 ```
 
 (Each query should return json documents with data.)

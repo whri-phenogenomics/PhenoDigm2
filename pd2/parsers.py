@@ -44,7 +44,7 @@ class GeneParser:
         MGIend = header.index("Genome_Coordinate_End")
                 
         # read from files into a dictionary        
-        with gzip.open(datafile, "rt") as f:
+        with gzip.open(datafile, "rt", encoding="utf-8") as f:
             reader = csv.reader(f, delimiter="\t", quotechar="\"")
             for fields in reader:                    
                 mgi = fields[MGIid]
@@ -100,7 +100,7 @@ class GeneParser:
         Hprev = header.index("prev_symbol")
         
         # read from files into a dictionary        
-        with gzip.open(datafile, "rt") as f:
+        with gzip.open(datafile, "rt", encoding="utf-8") as f:
             reader = csv.reader(f, delimiter="\t", quotechar="\"")
             for fields in reader:                    
                 hgnc = fields[Hid]
@@ -141,7 +141,7 @@ class OboSynonymsParser:
         
         nowid = ""
         nowname = ""                
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             for line in f:
                 line2 = line[:-1].split(": ", 1)                
                 # if line starts with id:, this is a start of [Term]                

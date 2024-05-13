@@ -172,15 +172,15 @@ def runDownloads(config):
                 # Fetch the OMIM API from secrets or as a local global variable
                 if nowid == 'OMIM':
                     secret = os.getenv('OMIM_API_KEY')
-                    nowurl += f'{secret}/' 
+                    nowurl += f'{secret}/'       
                 for f in nowset["filename"]:
-                     fetchFromURL(nowurl + f, outdir=nowdir)                                    
+                    fetchFromURL(nowurl + f, outdir=nowdir)                                   
         
     # Parse dependency file for ontology data
     catalog_file = join(resourcesdir, "catalog.xml")
     catalog_data = XML.parse(catalog_file)    
             
-    for xmlnode in list(catalog_data.getroot()):
+    for xmlnode in catalog_data.getroot().getchildren():
         if xmlnode.tag.endswith("uri"):
             nowurl = xmlnode.attrib["name"]
             nowfile = xmlnode.attrib["uri"]

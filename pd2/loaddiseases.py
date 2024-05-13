@@ -198,7 +198,7 @@ def loadDiseasePhenotypeData(dbfile, annodir, headersdir, dbdir):
     # Scan file, transfer all annotations into a memory dict
     disease_phenotypes = dict()
     diseases = pd2models.ModelDiseaseUpdate(dbfile) 
-    with open(file_pheno, "rt") as f:
+    with open(file_pheno, "rt", encoding="utf-8") as f:
         reader = csv.reader(f, delimiter="\t", quotechar="\"")
         for fields in reader:
             if fields[0][0] == "#":
@@ -224,7 +224,7 @@ def loadDiseasePhenotypeData(dbfile, annodir, headersdir, dbdir):
     # This block (until end of function) produces text files
     # Those text files are eventually used by owltools
     out_diseases = join(dbdir, "Hs-disease-labels.txt")
-    with open(out_diseases, "w") as f:
+    with open(out_diseases, "w", encoding="utf-8") as f:
         for nowd in sorted(disease_phenotypes.keys()):
             nowtitle = disease_phenotypes[nowd].title
             f.write(str(nowd)+"\t"+nowtitle+"\n")

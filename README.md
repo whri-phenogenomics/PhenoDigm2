@@ -25,7 +25,7 @@ phase, and about 4 GB per core for the `score` phase (see below).
 
 ### Software prerequisites
 
-PhenoDigm2 requires `python3` (v. 3.8) and packages `sqlite3` and `requests`. Installation
+PhenoDigm2 requires `python3` (v. 3.6) and packages `sqlite3` and `requests`. Installation
 of the python framework and dependent packages is covered in several web resources.
 For the present application, you should be able to execute `python3` from the command line
 and obtain the interactive python prompt.
@@ -59,7 +59,19 @@ python3 phenodigm2.py -h
 ### Setup in Apocrita
 PhenoDigm2 runs in Apocrita using `python3` (v 3.6).
 
-Since May 2023, a parsing error appeared after running `python3 code/PhenoDigm2/phenodigm.py build...`. The working code for python3.6 can be found as a tag through `git checkout python3.6`.
+Since May 2023, a parsing error appeared after running `python3 code/PhenoDigm2/phenodigm.py build...`. The current active solution is to use the `python3.6_parser` branch. Copy the repository to Apocrita (you will need a SSH key) and switch branches.
+
+```
+git clone [REPO_URL]
+
+# Switch branch
+git checkout python3.6_parser
+
+# Check active branch
+git branch
+>>> main
+>>> * python3.6_parser
+```
 
 
 ### Testing
