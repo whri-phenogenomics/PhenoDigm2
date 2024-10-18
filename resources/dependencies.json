@@ -90,7 +90,7 @@
   },
   "HGNC": {
     "comment": "Human gene identifiers",
-    "url": "http://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/",
+    "url": "https://storage.googleapis.com/public-download-files/hgnc/tsv/tsv/",
     "targetdir": "annotations",
     "filename": ["hgnc_complete_set.txt", "withdrawn.txt"]
   },  
