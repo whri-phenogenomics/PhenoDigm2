@@ -24,7 +24,10 @@ if [[ -z "$VENV_PATH" || -z "$DB_PATH" || -z "$CODE_PATH" || -z "$OUTPUT_DIR" ]]
     usage
 fi
 
-# 1. Decompress the db if its compressed
+# TODO: after this nothgin will work because the rest is designed for decompressed variable. 
+# Activate pigz for compression
+module load pigz/2.6 
+# 1. Decompress the db if codeits compressed
 # Conditional to check 
 if [[ "$DB_PATH" == *.tar.gz ]]; then 
     echo "Decompressing files..."
@@ -41,15 +44,12 @@ source "$VENV_PATH/bin/activate" || { echo "Failed to activate virtual environme
 #3. Create output directory:
 mkdir -p "$OUTPUT_DIR"
 
-# Activate pigz for compression
-module load pigz/2.6 
-
 # 4. a. Extract all of the required tables
 echo "Extracting tables..."
 tables=("model" "model_genotype" "disease" "disease_gene_mapping" "gene_gene_mapping")
 for i in "${!tables[@]}"; do
     table="${tables[$i]}"
-    if python3 "$CODE_PATH/phenodigm2.py" export --db "$DB_PATH" --table "$table" | pigz -k > "$OUTPUT_DIR/${table}.tsv.gz"; then
+    if python3 "$CODE_PATH/phenodigm2.py" export --db "$DB_PATH" --table "$table" | pigz -k -p4 > "$OUTPUT_DIR/${table}.tsv.gz"; then
         echo "Processed table: $table, output saved to: $OUTPUT_DIR/${table}.tsv.gz"
     else
         echo "Error processing table: $table" >&2
@@ -66,7 +66,7 @@ for i in "${!conditions[@]}"; do
     condition="${conditions[$i]}"
     file="${filenames[$i]}"
 
-    if python3 "$CODE_PATH/phenodigm2.py" export --db "$DB_PATH" --table disease_model_association --where "${condition}" | pigz -k > "$OUTPUT_DIR"/${file}.tsv.gz; then
+    if python3 "$CODE_PATH/phenodigm2.py" export --db "$DB_PATH" --table disease_model_association --where "${condition}" | pigz -k -p4 > "$OUTPUT_DIR"/${file}.tsv.gz; then
         echo "Processed file: $file, output saved to: $OUTPUT_DIR/${file}.tsv.gz"
     else
         echo "Error processing table: $file" >&2
