@@ -31,7 +31,8 @@ module load pigz/2.6
 # Conditional to check 
 if [[ "$DB_PATH" == *.tar.gz ]]; then 
     echo "Decompressing files..."
-    tar -xzf "$DB_PATH"
+    tar --use-compress-program=pigz -xvf "$DB_PATH"
+    DB_PATH="${DB_PATH%.tar.gz}"
 else
     echo "No decompression needed, the file does not have a .tar.gz extension."
 fi
