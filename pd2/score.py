@@ -243,16 +243,23 @@ class AssociationScoring:
         modelgenes = pd2extractors.getDbMapSets(mgmodel)         
         diseasegenes = pd2extractors.getAllDiseaseGenes(config.dbfile)
         # look for disease/models that have genes in common
-        self.musthaves = pd2dss.MapSets()        
-        for onedisease in diseasegenes.keys():
-            dgenes = diseasegenes.getset(onedisease)
+        # self.musthaves = pd2dss.MapSets()        
+        # for onedisease in diseasegenes.keys():
+        #     dgenes = diseasegenes.getset(onedisease)
                         
+        #     for onemodel in modelgenes.keys():
+        #         mgenes = modelgenes.getset(onemodel)
+        #         if not mgenes.isdisjoint(dgenes):
+        #             # the model and the disease have genes in common
+        #             self.musthaves.add(onedisease, onemodel)
+        #             self.musthaves.add(onemodel, onedisease)
+        self.musthaves = pd2dss.OptimisedMapSets()
+        for onedisease in diseasegenes.keys():
             for onemodel in modelgenes.keys():
-                mgenes = modelgenes.getset(onemodel)
-                if not mgenes.isdisjoint(dgenes):
+                if self.musthaves.quick_intersect(onedisease, onemodel):
                     # the model and the disease have genes in common
                     self.musthaves.add(onedisease, onemodel)
-                    self.musthaves.add(onemodel, onedisease)                                        
+                    self.musthaves.add(onemodel, onedisease)                 
 
     def scoreAssociations(self, typeA="model", typeB="model"):
         """Compute association scores

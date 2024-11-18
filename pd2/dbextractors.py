@@ -43,7 +43,8 @@ def getDbMapSets(model, field_key=0, field_value=1):
     f_value = model.fieldnames[field_value]
     
     # build the mapset
-    result = MapSets()
+    # result = MapSets()
+    result = OptimisedMapSets()
     generator = PhenodigmSimpleGenerator(model)
     for row in generator.next():
         result.add(row[f_key], row[f_value])
@@ -128,7 +129,8 @@ def getAllDiseaseGenes(dbfile):
     (i.e. avoid MGI disease-mousegene associations)."""
     
     # build a map from disease to human genes
-    diseasegenes = MapSets()
+    # diseasegenes = MapSets()
+    diseasegenes = OptimisedMapSets()
     diseasegenemodel = ModelDiseaseGeneMapping(dbfile)    
     generator = PhenodigmSimpleGenerator(diseasegenemodel)
     for row in generator.next():
@@ -141,7 +143,8 @@ def getAllDiseaseGenes(dbfile):
     genes = getDbGeneMap(dbfile) 
     
     # create a new MapSets objects with disease->mouse
-    raw = MapSets()    
+    # raw = MapSets()
+    raw = OptimisedMapSets()    
     for did in diseasegenes.keys():        
         for g1 in diseasegenes.get(did):
             if not g1.startswith("HGNC"):
@@ -152,11 +155,11 @@ def getAllDiseaseGenes(dbfile):
 
     # check that genes inserted in first pass are valid gene ids
     # (i.e. the ids are not withdrawn)
-    result = MapSets()
+    # result = MapSets()
+    result = OptimisedMapSets()
     for did in raw.keys():
         for g in raw.get(did):
             if genes[g].isValid():
                 result.add(did, g)
-
     return result
 

@@ -311,7 +311,52 @@ class MapSets:
             for b in self.map[a]:
                 result.add(b, a)
 
-        return result    
+        return result
+
+class OptimisedMapSets:
+    """Experimental map of sets with optimised operations"""
+    def __init__(self):
+        self.map = {}
+    
+    def keys(self):
+        return self.map.keys()
+    
+    def add(self, a, b):
+        """Efficiently add a connection from a to b."""
+        self.map.setdefault(a, set()).add(b)
+
+    def get(self, a):
+        """Retrieve a set, or None if a is not in map."""
+        return self.map.get(a)
+    
+    def getset(self, a):
+        """Always return a set, empty if key not found."""
+        return self.map.get(a, set())
+    
+    def has(self, a):
+        """Check if a is in the map."""
+        return a in self.map
+    
+    def haspair(self, a, b):
+        """Check if map has b in a's set."""
+        return a in self.map and b in self.map[a]
+    
+    def reverse(self):
+        """Create a reversed MapSets instance."""
+        result = OptimisedMapSets()
+        for a, values in self.map.items():
+            for b in values:
+                result.add(b, a)
+        return result
+    
+    def quick_intersect(self, a, b):
+        """Efficiently check if sets for a and b intersect."""
+        set_a = self.map.get(a, set())
+        set_b = self.map.get(b, set())
+        return not set_a.isdisjoint(set_b)
+
+    
+
 
 
 class GeneInfo:
