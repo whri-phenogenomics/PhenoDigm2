@@ -9,8 +9,24 @@ import luigi
 from luigi import Task, LocalTarget
 import os
 from pathlib import Path
+import requests
+from typing import Dict
 
+# Contants with paths to download data
+def post_process_paths(config) -> Dict[str, Path]:
 
+    post_proc_dir = _get_post_proc_dir(config)
+    return {
+        "data": Path(post_proc_dir, "data"),
+        "data_aux": Path(post_proc_dir, "data", "auxiliary"),
+        "hpo": Path(post_proc_dir, "data", "hpo"),
+        "impc": Path(post_proc_dir ,"data", "impc"),
+        "intermediate": Path(post_proc_dir ,"data", "intermediate"),
+        "output": Path(post_proc_dir,"data", "output"),
+        "phenodigm": Path(post_proc_dir,"data", "phenodigm"),
+        "scripts": Path(post_proc_dir,"scripts"),
+        "script_aux": Path(post_proc_dir,"scripts", "auxiliary")
+    }
 
 # helper functions here
 def _get_post_proc_dir(config) -> Path:
@@ -29,10 +45,18 @@ def run_post_process(config):
     # Or use default (current directory)
     luigi.build([CreatePostProcessDirs(config=config)], local_scheduler=True)
 
+def download_data(url, filename):
+    """Generic function to download data passing a URL.
 
-
-
-
+    Args:
+        url (str): URL of the ontology/gwas catalogue
+        filename (str): Filename to save the data. Can pass a path.
+    """
+    print(f"Fetching {filename}...")
+    response = requests.get(url, timeout=10)
+    with open(filename, "wb") as f:
+        f.write(response.content)
+    print("Done")
 
 
 # luigi tasks here
@@ -45,21 +69,15 @@ class CreatePostProcessDirs(Task):
         return LocalTarget(Path(post_proc_dir, "pipeline_status",".directories_created"))
 
     def run(self):
-        post_proc_dir = _get_post_proc_dir(self.config)
-        directories = [
-            Path(post_proc_dir, "data", "auxiliary"),
-            Path(post_proc_dir, "data", "hpo"),
-            Path(post_proc_dir, "data", "impc"),
-            Path(post_proc_dir, "data", "intermediate"),
-            Path(post_proc_dir, "data", "output"),
-            Path(post_proc_dir, "data", "phenodigm"),
-            Path(post_proc_dir, "scripts", "auxiliary"),
-        ]
+
+        paths = post_process_paths(self.config)
+        directories = [v for _, v in paths.items()]
 
         try:
             # Create all project directories
             for dir_path in directories:
                 os.makedirs(dir_path, exist_ok=True)
+                # print(f"making_dir_path:{dir_path}")
                 pd2tools.log(f"Created directory: {dir_path}")
 
             # Create the marker file to indicate successful completion
@@ -96,3 +114,4 @@ class DownloadResources(Task):
         # Auxiliary static
         # 1. "./data/auxiliary/omim_curation.tsv"
         
+        # NOTE: For now we will download everything here because the versions of the files are to remain flexible and cannot be determined at the begining of the build
