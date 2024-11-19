@@ -3,6 +3,8 @@
 # Function to display usage help
 usage() {
     echo "Usage: $0 --env <virtuan_env_path> --db <database_path> --code <path_to_phenodigm_repo> --output_dir <output_directory>"
+    echo ""
+    echo "Example: bash export_phenodigm_tables.sh --env venv --db v12102024 --code ~/code/PhenoDigm2/ --output_dir /v12102024/post_process/data/phenodigm/"
     exit 1  
 }
 
