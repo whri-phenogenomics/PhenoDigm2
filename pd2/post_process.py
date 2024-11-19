@@ -20,12 +20,12 @@ def post_process_paths(config) -> Dict[str, Path]:
         "data": Path(post_proc_dir, "data"),
         "data_aux": Path(post_proc_dir, "data", "auxiliary"),
         "hpo": Path(post_proc_dir, "data", "hpo"),
-        "impc": Path(post_proc_dir ,"data", "impc"),
-        "intermediate": Path(post_proc_dir ,"data", "intermediate"),
-        "output": Path(post_proc_dir,"data", "output"),
-        "phenodigm": Path(post_proc_dir,"data", "phenodigm"),
-        "scripts": Path(post_proc_dir,"scripts"),
-        "script_aux": Path(post_proc_dir,"scripts", "auxiliary")
+        "impc": Path(post_proc_dir, "data", "impc"),
+        "intermediate": Path(post_proc_dir, "data", "intermediate"),
+        "output": Path(post_proc_dir, "data", "output"),
+        "phenodigm": Path(post_proc_dir, "data", "phenodigm"),
+        "scripts": Path(post_proc_dir, "scripts"),
+        "script_aux": Path(post_proc_dir, "scripts", "auxiliary")
     }
 
 # helper functions here
@@ -41,9 +41,7 @@ def run_post_process(config):
     pd2tools.log("Running post processing pipeline")
     
     #LOGIC HERE
-    # post_proc_dir = _get_post_proc_dir(config)
-    # Or use default (current directory)
-    luigi.build([CreatePostProcessDirs(config=config)], local_scheduler=True)
+    luigi.build([DownloadResources(config=config)], local_scheduler=True)
 
 def download_data(url, filename):
     """Generic function to download data passing a URL.
@@ -52,11 +50,48 @@ def download_data(url, filename):
         url (str): URL of the ontology/gwas catalogue
         filename (str): Filename to save the data. Can pass a path.
     """
-    print(f"Fetching {filename}...")
+    pd2tools.log(f"Fetching {filename}")
     response = requests.get(url, timeout=10)
     with open(filename, "wb") as f:
         f.write(response.content)
-    print("Done")
+
+def downloads_dict(impc_data_release: str = 'latest'):
+    """Generic dictionary containing urls, filenames and paths to download post_processing files
+
+    Args:
+        impc_data_release (str, optional): IMPC data release to fetch. For older DRs type in the format: 'release-21.1' Defaults to 'latest'.
+
+    Returns:
+        Dict[str]: Returns a dictionary with the urls, filenames and paths to download post_processing files
+    """
+    downloads = {
+            "orthology": {
+                "url": "https://www.gentar.org/orthology-api/api/ortholog/one_to_one/impc/write_to_tsv_file",
+                "filename": "one_to_one_orthologs.tsv",
+                "targetdir": "data_aux"
+            },
+            "impc_geno_pheno_assertions":{
+                "url": f"http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/{impc_data_release}/results/genotype-phenotype-assertions-ALL.csv.gz",
+                "filename": "genotype-phenotype-assertions-ALL.csv.gz",
+                "targetdir": "impc"
+            },
+            "impc_viability": {
+                "url": f"http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/{impc_data_release}/results/viability.csv.gz",
+                "filename": "viability.csv.gz",
+                "targetdir": "impc",
+            },
+            "impc_stat_result": {
+                "url": f"http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/{impc_data_release}/results/statistical-results-ALL.csv.gz",
+                "filename": "statistical-results-ALL.csv.gz",
+                "targetdir": "impc"
+            },
+            "hpo_gene_to_pheno": {
+                "url": "https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2024-08-13/genes_to_phenotype.txt",
+                "filename": "genes_to_phenotype.txt",
+                "targetdir": "hpo"
+            }
+        }
+    return downloads
 
 
 # luigi tasks here
@@ -69,7 +104,6 @@ class CreatePostProcessDirs(Task):
         return LocalTarget(Path(post_proc_dir, "pipeline_status",".directories_created"))
 
     def run(self):
-
         paths = post_process_paths(self.config)
         directories = [v for _, v in paths.items()]
 
@@ -94,24 +128,34 @@ class CreatePostProcessDirs(Task):
 
 
 class DownloadResources(Task):
+
+    config = luigi.Parameter()
+
     def requires(self):
-        return CreatePostProcessDirs()
+        return CreatePostProcessDirs(config=self.config)
     
     def output(self):
         post_proc_dir = _get_post_proc_dir(self.config)
         return LocalTarget(Path(post_proc_dir, "pipeline_status",".files_downloaded"))
 
     def run(self):
-        pass
-        # TODO: Files to download
-        # 1. GENTAR Orthologues: ### https://www.gentar.org/orthology-api/api/ortholog/one_to_one/impc/write_to_tsv_file
-        # 2. IMPC DR geno-pheno assertions all http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/latest/results/genotype-phenotype-assertions-ALL.csv.gz
-        # 3. IMPC viability: http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/latest/results/viability.csv.gz
-        # 4. IMPC statistical results: http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/latest/results/statistical-results-ALL.csv.gz
-        # 5. HPO genes_to_phenotype: https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2024-08-13/genes_to_phenotype.txt
-        # 6. 
+        # Download data
+        pd2tools.log("Downloading post_process resources...")
+        downloads = downloads_dict(impc_data_release='release-21.1')
+        download_paths = post_process_paths(self.config)
+        for resource, values in downloads.items():
+            url = values["url"]
+            filename = values["filename"]
+            targetdir = values["targetdir"]
+            target_path = download_paths[targetdir]
+            file_path = Path(target_path, filename)
+            
+            download_data(url, file_path)
+        pd2tools.log(f"Now you should add the omim_curation.tsv file to {download_paths['data_aux']}")
 
-        # Auxiliary static
-        # 1. "./data/auxiliary/omim_curation.tsv"
-        
+        # Create the marker file to indicate successful completion
+        with self.output().open("w") as f:
+            f.write("Files downloaded successfully.")
+        pd2tools.log("Downloaded post-processing files successfully.")
+
         # NOTE: For now we will download everything here because the versions of the files are to remain flexible and cannot be determined at the begining of the build
