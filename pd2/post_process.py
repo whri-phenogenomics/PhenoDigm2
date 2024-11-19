@@ -86,7 +86,7 @@ def downloads_dict(impc_data_release: str = 'latest'):
                 "targetdir": "impc"
             },
             "hpo_gene_to_pheno": {
-                "url": "https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2024-06-25/genes_to_phenotype.txt",
+                "url": "https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2021-08-02/genes_to_phenotype.txt",
                 "filename": "genes_to_phenotype.txt",
                 "targetdir": "hpo"
             }
