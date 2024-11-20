@@ -141,7 +141,7 @@ class DownloadResources(Task):
     def run(self):
         # Download data
         pd2tools.log("Downloading post_process resources...")
-        downloads = downloads_dict(impc_data_release='release-21.1')
+        downloads = downloads_dict(impc_data_release='release-14.0')
         download_paths = post_process_paths(self.config)
         for resource, values in downloads.items():
             url = values["url"]
