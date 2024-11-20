@@ -86,7 +86,8 @@ def downloads_dict(impc_data_release: str = 'latest'):
                 "targetdir": "impc"
             },
             "hpo_gene_to_pheno": {
-                "url": "https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2022-12-15/genes_to_phenotype.txt",
+                # "url": "https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2022-12-15/genes_to_phenotype.txt",
+                "url": "https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2024-08-13/genes_to_phenotype.txt",
                 "filename": "genes_to_phenotype.txt",
                 "targetdir": "hpo"
             }
@@ -141,7 +142,7 @@ class DownloadResources(Task):
     def run(self):
         # Download data
         pd2tools.log("Downloading post_process resources...")
-        downloads = downloads_dict(impc_data_release='release-18.0')
+        downloads = downloads_dict(impc_data_release='latest')
         download_paths = post_process_paths(self.config)
         for resource, values in downloads.items():
             url = values["url"]
