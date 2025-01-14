@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 import requests
 from typing import Dict
+from . import export as pd2export
+import gzip
 
 # Contants with paths to download data
 def post_process_paths(config) -> Dict[str, Path]:
@@ -41,7 +43,12 @@ def run_post_process(config):
     pd2tools.log("Running post processing pipeline")
     
     #LOGIC HERE
-    luigi.build([DownloadResources(config=config)], local_scheduler=True)
+    # Set last independent tasks here
+    tasks = [
+        DownloadResources(config=config),
+        ExportTables(config=config)
+    ]
+    luigi.build(tasks, local_scheduler=True)
 
 def download_data(url, filename):
     """Generic function to download data passing a URL.
@@ -93,6 +100,30 @@ def downloads_dict(impc_data_release: str = 'latest'):
             }
         }
     return downloads
+
+# Function to extract the tables from the phenodigm database
+def export_tables(config):
+    
+    #1. TODO Extract the required tables
+    # set the target path to extract using post_process_paths
+    output_path = post_process_paths(config)["phenodigm"]
+    # List of tables to extract
+    tables = ["model", "model_genotype", "disease", "disease_gene_mapping", "gene_gene_mapping"]
+
+    # TODO: Optionally load pigz if available.
+    # Iterate over tables to export
+    for table in tables:
+        pd2tools.log(f"Exporting table: {table}")
+        config.table = table
+
+        temp_table = pd2export.return_export_tables(config) 
+        # Use gzip for compression
+        with gzip.open(f'{output_path}/{table}.tsv.gz', "wt") as f_out:
+            f_out.write(temp_table)
+    #2. TODO: Extract the conditional tables
+
+    
+
 
 
 # luigi tasks here
@@ -160,3 +191,21 @@ class DownloadResources(Task):
         pd2tools.log("Downloaded post-processing files successfully.")
 
         # NOTE: For now we will download everything here because the versions of the files are to remain flexible and cannot be determined at the begining of the build
+
+class ExportTables(Task):
+
+    # Pass config as a luigi param
+    config = luigi.Parameter()
+
+    def requires(self):
+        return CreatePostProcessDirs(config=self.config)
+    
+    def output(self):
+        post_proc_dir = _get_post_proc_dir(self.config)
+        return LocalTarget(Path(post_proc_dir, "pipeline_status",".tables_created"))
+    
+    def run(self):
+        # Export tables
+        pd2tools.log("Exporting tables...")
+        export_tables(self.config)
+        pd2tools.log("Exported tables successfully.")
