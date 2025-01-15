@@ -2,3 +2,5 @@ requests
 pytest
 urllib3<2.0 
 luigi
+pyyaml>6.0
+pydantic>2.10
