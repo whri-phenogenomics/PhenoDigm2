@@ -12,6 +12,7 @@ from pathlib import Path
 import requests
 from typing import Dict
 from . import export as pd2export
+from . import post_process_config as pd2PostProcConfig
 import gzip
 import shutil
 
@@ -28,7 +29,7 @@ def post_process_paths(config) -> Dict[str, Path]:
         "output": Path(post_proc_dir, "data", "output"),
         "phenodigm": Path(post_proc_dir, "data", "phenodigm"),
         "scripts": Path(post_proc_dir, "scripts"),
-        "script_aux": Path(post_proc_dir, "scripts", "auxiliary")
+        "scripts_aux": Path(post_proc_dir, "scripts", "auxiliary")
     }
 
 # helper functions here
@@ -45,9 +46,16 @@ def run_post_process(config):
     
     #LOGIC HERE
     # Set last independent tasks here
+
+    # Order of tasks right now is:
+    # 1. CreatePostProcessDirs
+    # 2a. DownloadResources
+    # 2b. ExportTables
+    # 3. RelocateExternalResources
+
     tasks = [
         DownloadResources(config=config),
-        ExportTables(config=config)
+        RelocateExternalResources(config=config)
     ]
     luigi.build(tasks, local_scheduler=True)
 
@@ -168,6 +176,37 @@ def export_tables(config):
 
 
 
+def relocate_external_resources(config):
+
+    # Helper function to transfer files within the HPC
+    def _transfer_files(source, destination):
+        try: 
+            shutil.copy2(source, destination)
+        except Exception as e:
+            pd2tools.log(f"Error transfering from {source} to {destination}: {e}")
+
+    # Get the path to the post_proc dir to access the config.yaml file
+    post_proc_dir = _get_post_proc_dir(config)
+    
+    # set the target path to extract using post_process_paths
+    output_path = post_process_paths(config)
+
+    # TODO: these paths can be passed using a config.yaml file
+    # Use pydantic to parse these? 
+    post_proc_paths = pd2PostProcConfig.load_config(Path(post_proc_dir, "post_process_config.yaml"))
+
+    # List of tuples with source path and target path
+    src_dest = [
+        (post_proc_paths.omim_curation_path, output_path["data_aux"]),
+        (post_proc_paths.main_r_script_path, output_path["scripts"]),
+        (post_proc_paths.hgnc_symbol_checker_script_path, output_path["scripts_aux"]),
+    ]
+    # Target paths
+    # Transfer here:
+    for tup in src_dest:
+        _transfer_files(tup[0], tup[1])
+
+    # TODO: The two scripts have to be transfered from the Git repository first.
 
 # luigi tasks here
 class CreatePostProcessDirs(Task):
@@ -255,3 +294,30 @@ class ExportTables(Task):
         # Create the marker file to indicate successful completion
         with self.output().open("w") as f:
             f.write("Tables exported successfully.")
+
+# Task to find and copy to current bundle:
+# omim_curation.tsv
+# R scripts
+# Auxiliary R scripts 
+class RelocateExternalResources(Task):
+    
+    config = luigi.Parameter()
+    
+    def requires(self):
+        return ExportTables(config=self.config)
+    
+    def output(self):
+        post_proc_dir = _get_post_proc_dir(self.config)
+        return LocalTarget(Path(post_proc_dir, "pipeline_status",".resources_relocated"))
+    
+    def run(self):
+        # Relocate external resources
+        pd2tools.log("Relocating external resources:")
+        relocate_external_resources(self.config)
+        pd2tools.log("Relocated external resources successfully.")
+        with self.output().open("w") as f:
+            f.write("Resources relocated successfully.")
+
+
+# Task to run R script
+
