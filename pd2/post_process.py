@@ -13,6 +13,7 @@ import requests
 from typing import Dict
 from . import export as pd2export
 import gzip
+import shutil
 
 # Contants with paths to download data
 def post_process_paths(config) -> Dict[str, Path]:
@@ -104,7 +105,8 @@ def downloads_dict(impc_data_release: str = 'latest'):
 # Function to extract the tables from the phenodigm database
 def export_tables(config):
     
-    #1. TODO Extract the required tables
+    # Extract the base tables
+
     # set the target path to extract using post_process_paths
     output_path = post_process_paths(config)["phenodigm"]
     # List of tables to extract
@@ -112,17 +114,58 @@ def export_tables(config):
 
     # TODO: Optionally load pigz if available.
     # Iterate over tables to export
+    pd2tools.log("Exporting standard tables...")
     for table in tables:
-        pd2tools.log(f"Exporting table: {table}")
-        config.table = table
+        output_file_path = Path(f'{output_path}/{table}.tsv.gz')
 
+        # Skip if the file already exists
+        if output_file_path.exists():
+            pd2tools.log(f"Skipping table: {table}.tsv.gz (already exists)")
+            continue
+        pd2tools.log(f"Exporting table: {table}.tsv.gz")
+        config.table = table
         temp_table = pd2export.return_export_tables(config) 
         # Use gzip for compression
-        with gzip.open(f'{output_path}/{table}.tsv.gz', "wt") as f_out:
+        with gzip.open(output_file_path, "wt") as f_out:
             f_out.write(temp_table)
-    #2. TODO: Extract the conditional tables
-
     
+    # Extract the conditional tables
+    pd2tools.log("Extracting conditional tables...")
+
+    conditions = [
+        "query LIKE '%OMIM%' AND match LIKE '%#%'",
+        "query LIKE '%ORPHA%' AND match LIKE '%#%'",
+        "query LIKE '%DECIPHER%' AND match LIKE '%#%'",
+        "query LIKE '%OMIM%' AND match NOT LIKE '%#%'",
+        "query LIKE '%ORPHA%' AND match NOT LIKE '%#%'",
+        "query LIKE '%DECIPHER%' AND match NOT LIKE '%#%'"
+    ]
+
+    filenames = [
+        "disease_model_association_omim_impc",
+        "disease_model_association_orphanet_impc",
+        "disease_model_association_decipher_impc",
+        "disease_model_association_omim_nonimpc",
+        "disease_model_association_orphanet_nonimpc",
+        "disease_model_association_decipher_nonimpc"
+    ]
+
+    for cond, filename in zip(conditions, filenames):
+
+        output_file_path = Path(f'{output_path}/{filename}.tsv.gz')
+        # Skip if the file already exists
+        if output_file_path.exists():
+            pd2tools.log(f"Skipping table: {filename}.tsv.gz (already exists)")
+            continue
+        pd2tools.log(f"Exporting table: {filename}.tar.gz")
+        config.table = "disease_model_association"
+        config.where = cond
+        temp_table = pd2export.return_export_tables(config)
+        with gzip.open(output_file_path, "wt") as f_out:
+            f_out.write(temp_table)
+        
+        # TODO: add error handling
+
 
 
 
@@ -202,10 +245,13 @@ class ExportTables(Task):
     
     def output(self):
         post_proc_dir = _get_post_proc_dir(self.config)
-        return LocalTarget(Path(post_proc_dir, "pipeline_status",".tables_created"))
-    
+        return LocalTarget(Path(post_proc_dir, "pipeline_status", ".tables_created"))
+
     def run(self):
         # Export tables
-        pd2tools.log("Exporting tables...")
+        pd2tools.log("Exporting tables:")
         export_tables(self.config)
         pd2tools.log("Exported tables successfully.")
+        # Create the marker file to indicate successful completion
+        with self.output().open("w") as f:
+            f.write("Tables exported successfully.")
