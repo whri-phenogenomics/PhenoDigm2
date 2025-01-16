@@ -206,7 +206,7 @@ In spring 2021, the IMPC team decided to update how disease-model associations a
 ## Post processing analysis pipeline
 In 2023, the [disease models portal](https://diseasemodels.research.its.qmul.ac.uk) was published and in 2024 the pheval benchmarking was completed. To feed these resources, the pipeline was extended and was called `post_process` using [luigi](https://luigi.readthedocs.io/en/stable/running_luigi.html). This pipeline produces the files needed for these resources. **This is an experimental feature and is considered unstable**.
 
-To execute the pipeline you need at least 1 core of 32GB of RAM:
+To execute the pipeline you need at least 1 core of 64GB of RAM:
 
 1. Copy the post_process_config.yaml into the db directory
 ```
