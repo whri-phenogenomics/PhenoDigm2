@@ -15,6 +15,7 @@ from . import export as pd2export
 from . import post_process_config as pd2PostProcConfig
 import gzip
 import shutil
+import subprocess
 
 # Contants with paths to download data
 def post_process_paths(config) -> Dict[str, Path]:
@@ -55,7 +56,7 @@ def run_post_process(config):
 
     tasks = [
         DownloadResources(config=config),
-        RelocateExternalResources(config=config)
+        RunRPhenodigmAnalysis(config=config)
     ]
     luigi.build(tasks, local_scheduler=True)
 
@@ -177,14 +178,6 @@ def export_tables(config):
 
 
 def relocate_external_resources(config):
-
-    # Helper function to transfer files within the HPC
-    def _transfer_files(source, destination):
-        try: 
-            shutil.copy2(source, destination)
-        except Exception as e:
-            pd2tools.log(f"Error transfering from {source} to {destination}: {e}")
-
     # Get the path to the post_proc dir to access the config.yaml file
     post_proc_dir = _get_post_proc_dir(config)
     
@@ -204,9 +197,24 @@ def relocate_external_resources(config):
     # Target paths
     # Transfer here:
     for tup in src_dest:
-        _transfer_files(tup[0], tup[1])
+        shutil.copy2(tup[0], tup[1])
 
     # TODO: The two scripts have to be transfered from the Git repository first.
+
+def run_post_processing_analysis(config):
+
+    
+    # Locate the script
+    r_script_path = Path(post_process_paths(config)["scripts"], "DR_22_Update_DM_pipeline.R")
+
+    # Post process path for the script to execute:
+    post_proc_dir = _get_post_proc_dir(config)
+
+    command = ["Rscript", str(r_script_path), str(post_proc_dir)]
+    subprocess.run(
+            command,
+            text=True, check=True
+        )
 
 # luigi tasks here
 class CreatePostProcessDirs(Task):
@@ -235,7 +243,7 @@ class CreatePostProcessDirs(Task):
 
         except Exception as e:
             pd2tools.log(f"Error creating directories: {e}")
-            raise e
+            raise RuntimeError("Creating directories failed  - check logs error for details") from e
         
         # Create a pipeline_status dir
         os.makedirs(_get_pipeline_status_dir(self.config), exist_ok=True)
@@ -255,22 +263,27 @@ class DownloadResources(Task):
     def run(self):
         # Download data
         pd2tools.log("Downloading post_process resources...")
-        downloads = downloads_dict(impc_data_release='latest')
-        download_paths = post_process_paths(self.config)
-        for resource, values in downloads.items():
-            url = values["url"]
-            filename = values["filename"]
-            targetdir = values["targetdir"]
-            target_path = download_paths[targetdir]
-            file_path = Path(target_path, filename)
-            
-            download_data(url, file_path)
-        pd2tools.log(f"Now you should add the omim_curation.tsv file to {download_paths['data_aux']}")
+        try:
+            downloads = downloads_dict(impc_data_release='latest')
+            download_paths = post_process_paths(self.config)
+            for resource, values in downloads.items():
+                url = values["url"]
+                filename = values["filename"]
+                targetdir = values["targetdir"]
+                target_path = download_paths[targetdir]
+                file_path = Path(target_path, filename)
+                
+                download_data(url, file_path)
+            # pd2tools.log(f"Now you should add the omim_curation.tsv file to {download_paths['data_aux']}")
 
-        # Create the marker file to indicate successful completion
-        with self.output().open("w") as f:
-            f.write("Files downloaded successfully.")
-        pd2tools.log("Downloaded post-processing files successfully.")
+            # Create the marker file to indicate successful completion
+            with self.output().open("w") as f:
+                f.write("Files downloaded successfully.")
+            pd2tools.log("Downloaded post-processing files successfully.")
+        
+        except Exception as e:
+            pd2tools.log(f"Error downloading resources: {e}")
+            raise RuntimeError("Downloading resources failed - check logs error for details") from e
 
         # NOTE: For now we will download everything here because the versions of the files are to remain flexible and cannot be determined at the begining of the build
 
@@ -289,11 +302,17 @@ class ExportTables(Task):
     def run(self):
         # Export tables
         pd2tools.log("Exporting tables:")
-        export_tables(self.config)
-        pd2tools.log("Exported tables successfully.")
-        # Create the marker file to indicate successful completion
-        with self.output().open("w") as f:
-            f.write("Tables exported successfully.")
+        try: 
+            export_tables(self.config)
+            pd2tools.log("Exported tables successfully.")
+            # Create the marker file to indicate successful completion
+            with self.output().open("w") as f:
+                f.write("Tables exported successfully.")
+
+        except Exception as e:
+            pd2tools.log(f"Error exporting tables: {e}")
+            raise RuntimeError("Exporting tables failed - check logs error for details") from e
+        
 
 # Task to find and copy to current bundle:
 # omim_curation.tsv
@@ -312,12 +331,39 @@ class RelocateExternalResources(Task):
     
     def run(self):
         # Relocate external resources
-        pd2tools.log("Relocating external resources:")
-        relocate_external_resources(self.config)
-        pd2tools.log("Relocated external resources successfully.")
-        with self.output().open("w") as f:
-            f.write("Resources relocated successfully.")
+        pd2tools.log("Relocating external resources...")
+        try: 
+            relocate_external_resources(self.config)
+            pd2tools.log("Relocated external resources successfully.")
+            with self.output().open("w") as f:
+                f.write("Relocated external resources successfully.")
 
+        except Exception as e:
+            pd2tools.log(f"Error relocating external resources: {e}")
+            raise RuntimeError("External resources relocation failed - check logs error for details") from e
 
 # Task to run R script
+class RunRPhenodigmAnalysis(Task):
 
+    config = luigi.Parameter()
+
+    def requires(self):
+        return RelocateExternalResources(config=self.config)
+
+    def output(self):
+        post_proc_dir = _get_post_proc_dir(self.config)
+        return LocalTarget(Path(post_proc_dir, "pipeline_status",".post_processing_analysis_complete"))
+
+    def run(self):
+        # Run R script with post processing analysis, DM portal files and benchmarking files
+        pd2tools.log("Running post processing analysis...")
+        try:
+            run_post_processing_analysis(self.config)
+            pd2tools.log("Post processing analysis successful.")
+            with self.output().open("w") as f:
+                f.write("Post processing analysis successful.")
+        except Exception as e:
+            pd2tools.log(f"Error running post processing analysis: {e}")
+            raise RuntimeError("Running post processing analysis failed - check logs error for details") from e
+             
+            # raise RuntimeError("Post processing failed - check logs for details") from e
