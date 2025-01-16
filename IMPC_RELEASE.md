@@ -226,6 +226,7 @@ main_r_script_path: "code/PhenoDigm2/RScripts/DR_22_Update_DM_pipeline.R"
 hgnc_symbol_checker_script_path: "code/PhenoDigm2/RScripts/auxiliary/hgnc_symbol_checker.R"
 ```
 This will create a copy of the three files into the bundle, which can be useful for tracking.
+
 3. Run the pipeline
 ```
 python3 /code/PhenoDigm2/phenodigm2.py post_process --db vTODAY
