@@ -148,6 +148,7 @@ def export_tables(config):
         "query LIKE '%OMIM%' AND match NOT LIKE '%#%'",
         "query LIKE '%ORPHA%' AND match NOT LIKE '%#%'",
         "query LIKE '%DECIPHER%' AND match NOT LIKE '%#%'"
+        "query LIKE '%OMIM%'"
     ]
 
     filenames = [
@@ -156,7 +157,8 @@ def export_tables(config):
         "disease_model_association_decipher_impc",
         "disease_model_association_omim_nonimpc",
         "disease_model_association_orphanet_nonimpc",
-        "disease_model_association_decipher_nonimpc"
+        "disease_model_association_decipher_nonimpc",
+        "disease_model_association_omim"
     ]
 
     for cond, filename in zip(conditions, filenames):
