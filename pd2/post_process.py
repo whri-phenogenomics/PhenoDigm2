@@ -147,7 +147,7 @@ def export_tables(config):
         "query LIKE '%DECIPHER%' AND match LIKE '%#%'",
         "query LIKE '%OMIM%' AND match NOT LIKE '%#%'",
         "query LIKE '%ORPHA%' AND match NOT LIKE '%#%'",
-        "query LIKE '%DECIPHER%' AND match NOT LIKE '%#%'"
+        "query LIKE '%DECIPHER%' AND match NOT LIKE '%#%'",
         "query LIKE '%OMIM%'"
     ]
 
