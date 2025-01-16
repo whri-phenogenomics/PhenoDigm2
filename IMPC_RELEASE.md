@@ -227,8 +227,9 @@ hgnc_symbol_checker_script_path: "code/PhenoDigm2/RScripts/auxiliary/hgnc_symbol
 ```
 This will create a copy of the three files into the bundle, which can be useful for tracking.
 
-3. Run the pipeline
+3. Load a version of R and run the pipeline
 ```
+module load R/4.2.0
 python3 /code/PhenoDigm2/phenodigm2.py post_process --db vTODAY
 ```
 
