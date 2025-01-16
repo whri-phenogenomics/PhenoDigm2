@@ -179,14 +179,16 @@ def export_tables(config):
 
 def relocate_external_resources(config):
     # Get the path to the post_proc dir to access the config.yaml file
-    post_proc_dir = _get_post_proc_dir(config)
+    # post_proc_dir = _get_post_proc_dir(config)
+
+    rootdir = Path(config.db).resolve()
     
     # set the target path to extract using post_process_paths
     output_path = post_process_paths(config)
 
-    # TODO: these paths can be passed using a config.yaml file
-    # Use pydantic to parse these? 
-    post_proc_paths = pd2PostProcConfig.load_config(Path(post_proc_dir, "post_process_config.yaml"))
+    # TODO: localte the post_process_config file in the db directory
+
+    post_proc_paths = pd2PostProcConfig.load_config(Path(rootdir, "post_process_config.yaml"))
 
     # List of tuples with source path and target path
     src_dest = [
