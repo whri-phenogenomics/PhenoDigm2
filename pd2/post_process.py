@@ -166,7 +166,7 @@ def export_tables(config):
         if output_file_path.exists():
             pd2tools.log(f"Skipping table: {filename}.tsv.gz (already exists)")
             continue
-        pd2tools.log(f"Exporting table: {filename}.tar.gz")
+        pd2tools.log(f"Exporting table: {filename}.tsv.gz")
         config.table = "disease_model_association"
         config.where = cond
         temp_table = pd2export.return_export_tables(config)
