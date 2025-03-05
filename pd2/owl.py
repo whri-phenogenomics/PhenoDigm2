@@ -25,13 +25,13 @@ runProcess = pd2tools.runProcess
 def loadOneOwlCacheFile(config, owlpair):
     """Transfer data from one owltools-cache file into db."""
         
-    rootdir, datadir, resourcesdir, dbdir = pd2tools.getPD2dirs(config)
-    cachefile = "owltools-cache-" + owlpair + ".txt.gz"
+    _, _, resourcesdir, dbdir = pd2tools.getPD2dirs(config)
+    cachefile = "semsimian-cache-" + owlpair + ".txt.gz"
     pd2tools.log("Loading: " + cachefile, 2)
     cachefilepath = os.path.join(dbdir, cachefile)
     annodir = os.path.join(resourcesdir, "annotations")
 
-    header_file = os.path.join(annodir, "owltools_cache.header")
+    header_file = os.path.join(annodir, "semsimian_cache.header")
     header = readHeader(header_file, "\t")
     idindex = header.index("id")
     hitindex = header.index("id_hit")
@@ -44,17 +44,20 @@ def loadOneOwlCacheFile(config, owlpair):
     with gzip.open(cachefilepath, "rt") as f:
         reader = csv.reader(f, delimiter="\t", quotechar="\"")        
         for fields in reader:
-            idtext = fields[idindex].strip().replace("_", ":")  
-            hittext = fields[hitindex].strip().replace("_", ":")
-            mapdata.addData(idtext, hittext,                             
-                            fields[simindex].strip(), 
+            # idtext = fields[idindex].strip().replace("_", ":")  
+            # hittext = fields[hitindex].strip().replace("_", ":")
+            # mapdata.addData(idtext, hittext
+            mapdata.addData(
+                            fields[idindex].strip(),
+                            fields[hitindex].strip(),                            
+                            fields[simindex].strip(),
                             fields[icindex].strip(),
                             fields[lcsindex].strip())
     # transfer into db
     mapdata.save()
 
 
-def loadOwlCacheFiles(config, owlpairs=("hp-hp", "hp-mp", "mp-mp")):
+def loadOwlCacheFiles(config, owlpairs=("hp-hp", "hp-mp")):
     """Transfer data from owltools-cache-XX-YY.txt files into db."""
     
     for onepair in owlpairs:    
