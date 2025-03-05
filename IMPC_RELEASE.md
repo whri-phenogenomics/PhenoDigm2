@@ -228,8 +228,11 @@ hgnc_symbol_checker_script_path: "code/PhenoDigm2/RScripts/auxiliary/hgnc_symbol
 This will create a copy of the three files into the bundle, which can be useful for tracking.
 
 3. Load a version of R and run the pipeline
+
+3a. Since Apocrita's OS upgrade to Rocky, we must pass a path to store a local R library for installing packages. One has beeen made available in WHRI-Phenogenomics.
 ```
-module load R/4.2.0
+module load R/4.4.1
+export R_LIBS_USER=/data/WHRI-Phenogenomics/projects/PhenoDigm2/post_processing_dependencies/r_lib_paths/R/x86_64-pc-linux-gnu-library/4.4.1
 python3 /code/PhenoDigm2/phenodigm2.py post_process --db vTODAY
 ```
 
