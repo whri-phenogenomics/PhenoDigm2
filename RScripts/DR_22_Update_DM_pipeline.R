@@ -6,6 +6,10 @@
 ### https://www.gentar.org/orthology-api/api/ortholog/one_to_one/impc/write_to_tsv_file
 ### http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/release-22.0/results/
 
+
+# Set library path for the interpreter
+.libPaths('/data/WHRI-Phenogenomics/projects/PhenoDigm2/post_processing_dependencies/r_lib_paths/R/x86_64-pc-linux-gnu-library/4.4.1')
+
 # Intake CLI arguments Here we pass the absolute path to the phenodigm DB
 
 args <- commandArgs(trailingOnly = TRUE)
