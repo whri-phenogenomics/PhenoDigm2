@@ -152,7 +152,8 @@ if __name__ == "__main__":
         dbbuild.runDBBuild(config)
         load.runLoad(config)
     if config.action == "owltools":
-        owl.runOwltools(config)
+        # owl.runOwltools(config)
+        owl.loadOwlCacheFiles(config)
     if config.action == "score":
         score.runScoring(config)
     if config.action == "index":
