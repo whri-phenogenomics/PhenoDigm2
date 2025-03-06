@@ -47,9 +47,6 @@ def _get_pipeline_status_dir(config) -> None:
 def run_post_process(config):
     pd2tools.log("Running post processing pipeline")
 
-    # LOGIC HERE
-    # Set last independent tasks here
-
     # Order of tasks right now is:
     # 1. CreatePostProcessDirs
     # 2a. DownloadResources
@@ -104,7 +101,6 @@ def downloads_dict(impc_data_release: str = "latest"):
             "targetdir": "impc",
         },
         "hpo_gene_to_pheno": {
-            # "url": "https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2022-12-15/genes_to_phenotype.txt",
             "url": "https://github.com/obophenotype/human-phenotype-ontology/releases/download/2025-03-03/genes_to_phenotype.txt",
             "filename": "genes_to_phenotype.txt",
             "targetdir": "hpo",
@@ -128,7 +124,6 @@ def export_tables(config):
         "gene_gene_mapping",
     ]
 
-    # TODO: Optionally load pigz if available.
     # Iterate over tables to export
     pd2tools.log("Exporting standard tables...")
     for table in tables:
@@ -181,20 +176,14 @@ def export_tables(config):
         with gzip.open(output_file_path, "wt") as f_out:
             f_out.write(temp_table)
 
-        # TODO: add error handling
-
 
 def relocate_external_resources(config):
-    # Get the path to the post_proc dir to access the config.yaml file
-    # post_proc_dir = _get_post_proc_dir(config)
-
     rootdir = Path(config.db).resolve()
 
-    # set the target path to extract using post_process_paths
+    # Set the target path to extract using post_process_paths
     output_path = post_process_paths(config)
 
-    # TODO: localte the post_process_config file in the db directory
-
+    # Set the path for the config.yaml file
     post_proc_paths = pd2PostProcConfig.load_config(
         Path(rootdir, "post_process_config.yaml")
     )
@@ -205,12 +194,9 @@ def relocate_external_resources(config):
         (post_proc_paths.main_r_script_path, output_path["scripts"]),
         (post_proc_paths.hgnc_symbol_checker_script_path, output_path["scripts_aux"]),
     ]
-    # Target paths
-    # Transfer here:
+    # Copy the files
     for tup in src_dest:
         shutil.copy2(tup[0], tup[1])
-
-    # TODO: The two scripts have to be transfered from the Git repository first.
 
 
 def run_post_processing_analysis(config):
@@ -226,7 +212,7 @@ def run_post_processing_analysis(config):
     subprocess.run(command, text=True, check=True)
 
 
-# luigi tasks here
+# Luigi tasks
 class CreatePostProcessDirs(Task):
     config = luigi.Parameter()
 
@@ -244,7 +230,6 @@ class CreatePostProcessDirs(Task):
             # Create all project directories
             for dir_path in directories:
                 os.makedirs(dir_path, exist_ok=True)
-                # print(f"making_dir_path:{dir_path}")
                 pd2tools.log(f"Created directory: {dir_path}")
 
             # Create the marker file to indicate successful completion
@@ -278,7 +263,7 @@ class DownloadResources(Task):
         try:
             downloads = downloads_dict(impc_data_release="latest")
             download_paths = post_process_paths(self.config)
-            for resource, values in downloads.items():
+            for _, values in downloads.items():
                 url = values["url"]
                 filename = values["filename"]
                 targetdir = values["targetdir"]
@@ -286,7 +271,6 @@ class DownloadResources(Task):
                 file_path = Path(target_path, filename)
 
                 download_data(url, file_path)
-            # pd2tools.log(f"Now you should add the omim_curation.tsv file to {download_paths['data_aux']}")
 
             # Create the marker file to indicate successful completion
             with self.output().open("w") as f:
@@ -303,7 +287,6 @@ class DownloadResources(Task):
 
 
 class ExportTables(Task):
-    # Pass config as a luigi param
     config = luigi.Parameter()
 
     def requires(self):
@@ -314,7 +297,6 @@ class ExportTables(Task):
         return LocalTarget(Path(post_proc_dir, "pipeline_status", ".tables_created"))
 
     def run(self):
-        # Export tables
         pd2tools.log("Exporting tables:")
         try:
             export_tables(self.config)
@@ -347,7 +329,6 @@ class RelocateExternalResources(Task):
         )
 
     def run(self):
-        # Relocate external resources
         pd2tools.log("Relocating external resources...")
         try:
             relocate_external_resources(self.config)
@@ -362,7 +343,6 @@ class RelocateExternalResources(Task):
             ) from e
 
 
-# Task to run R script
 class RunRPhenodigmAnalysis(Task):
     config = luigi.Parameter()
 
@@ -388,5 +368,3 @@ class RunRPhenodigmAnalysis(Task):
             raise RuntimeError(
                 "Running post processing analysis failed - check logs error for details"
             ) from e
-
-            # raise RuntimeError("Post processing failed - check logs for details") from e
