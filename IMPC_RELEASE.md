@@ -229,7 +229,9 @@ This will create a copy of the three files into the bundle, which can be useful 
 
 3. Load a version of R and run the pipeline
 
-3a. Since Apocrita's OS upgrade to Rocky, we must pass a path to store a local R library for installing packages. One has beeen made available in WHRI-Phenogenomics.
+    **Note**: Since Apocrita's OS upgrade to Rocky, we must pass a path to store a local R library for installing packages. One has beeen made available in WHRI-Phenogenomics.
+
+   If you are using an R version different from the one below, a new directory must be created with the new version as its name. The main R script must be modified too.
 ```
 module load R/4.4.1
 export R_LIBS_USER=/data/WHRI-Phenogenomics/projects/PhenoDigm2/post_processing_dependencies/r_lib_paths/R/x86_64-pc-linux-gnu-library/4.4.1
