@@ -15,6 +15,7 @@ from pd2 import score
 from pd2 import solr
 from pd2 import status
 from pd2 import tools
+from pd2 import post_process
 
 
 # ############################################################################
@@ -113,7 +114,7 @@ parser.add_argument("action", action="store",
                     help="Type of calculation/action to perform", 
                     choices=["download", "build", "owltools", "score", 
                              "index", "solr", "query", "export", "compute",
-                             "status"])
+                             "status", "post-process"])
 
 
 # ############################################################################
@@ -159,6 +160,9 @@ if __name__ == "__main__":
         dbbuild.runDBIndexing(config)   
     if config.action == "solr":
         solr.runSolrCoreBuild(config)
+    if config.action == "post-process":
+        post_process.run_post_process(config)
+
         
     tools.log("Done")        
 

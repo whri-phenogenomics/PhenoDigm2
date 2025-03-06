@@ -1,0 +1,3 @@
+omim_curation_path: "omim_curation.tsv"
+main_r_script_path: "DR_22_Update_DM_pipeline.R"
+hgnc_symbol_checker_script_path: "hgnc_symbol_checker.R"

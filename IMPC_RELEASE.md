@@ -199,21 +199,43 @@ zip -r phenodigm_vTODAY.zip phenodigm_vTODAY
 
 The resulting zip file is ready to transfer to IMPC.
 
+## Release end notes
 
-## End notes
+In spring 2021, the IMPC team decided to update how disease-model associations are displayed on the data portal. The new proposal requires displaying information about 'matching phenotypes'. These fields are now part of the main solr core.
 
-In spring 2021, the IMPC team decided to update how disease-model associations are displayed on the data portal. The new proposal requires displaying information about 'matching phenotypes'. These fields are not included in the default solr core. To include them, switch to a separate git branch and repeat the solr core build. When done, switch back to the main branch. 
+## Post processing analysis pipeline
+In 2023, the [disease models portal](https://diseasemodels.research.its.qmul.ac.uk) was published and in 2024 the pheval benchmarking was completed. To feed these resources, the pipeline was extended and was called `post-process` using [luigi](https://luigi.readthedocs.io/en/stable/running_luigi.html). This pipeline produces the files needed for these resources. 
 
+To execute the pipeline you need at least 1 core of 32GB of RAM:
+
+1. Copy the post_process_config.yaml into the db directory
 ```
-# switch to a separate git branch
-cd /code/PhenoDigm2/
-git checkout solr_matched_phens
-cd /data/PhenoDigm2/
-# ensure that a phenodigm core does not exist
-...
-# build a core
-...
-# switch back to the main branch
-cd /code/Phenodigm2/
-git checkout master
+cp -r /code/PhenoDigm2/post_process_config.yaml vTODAY/
 ```
+2. Using a text editor of your choice (e.g nano) edit `post_process_config.yaml` to write the path to the following files :
+- "omim_curation.tsv"
+- "DR_22_Update_DM_pipeline.R
+- "hgnc_symbol_checker.R"
+
+Both R scripts are within this repo, so you could pass the following paths and the omim file is available in the HPC PhenoDigm2 directory, so as an example use:
+```
+post_process_config.yaml
+
+omim_curation_path: "Path/to/omim/curation/file/omim_curation.tsv"
+main_r_script_path: "code/PhenoDigm2/RScripts/DR_22_Update_DM_pipeline.R"
+hgnc_symbol_checker_script_path: "code/PhenoDigm2/RScripts/auxiliary/hgnc_symbol_checker.R"
+```
+This will create a copy of the three files into the bundle, which can be useful for tracking.
+
+3. Load a version of R and run the pipeline
+
+    **Note**: Since Apocrita's OS upgrade to Rocky, we must pass a path to store a local R library for installing packages. One has beeen made available in WHRI-Phenogenomics.
+
+   If you are using an R version different from the one below, a new directory must be created with the new version as its name. The main R script must be modified too.
+```
+module load R/4.4.1
+export R_LIBS_USER=/data/WHRI-Phenogenomics/projects/PhenoDigm2/post_processing_dependencies/r_lib_paths/R/x86_64-pc-linux-gnu-library/4.4.1
+python3 /code/PhenoDigm2/phenodigm2.py post-process --db vTODAY
+```
+
+
