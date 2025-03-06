@@ -114,7 +114,7 @@ parser.add_argument("action", action="store",
                     help="Type of calculation/action to perform", 
                     choices=["download", "build", "owltools", "score", 
                              "index", "solr", "query", "export", "compute",
-                             "status", "post_process"])
+                             "status", "post-process"])
 
 
 # ############################################################################
@@ -160,7 +160,7 @@ if __name__ == "__main__":
         dbbuild.runDBIndexing(config)   
     if config.action == "solr":
         solr.runSolrCoreBuild(config)
-    if config.action == "post_process":
+    if config.action == "post-process":
         post_process.run_post_process(config)
 
         
