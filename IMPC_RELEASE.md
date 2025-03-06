@@ -204,7 +204,7 @@ The resulting zip file is ready to transfer to IMPC.
 In spring 2021, the IMPC team decided to update how disease-model associations are displayed on the data portal. The new proposal requires displaying information about 'matching phenotypes'. These fields are now part of the main solr core.
 
 ## Post processing analysis pipeline
-In 2023, the [disease models portal](https://diseasemodels.research.its.qmul.ac.uk) was published and in 2024 the pheval benchmarking was completed. To feed these resources, the pipeline was extended and was called `post_process` using [luigi](https://luigi.readthedocs.io/en/stable/running_luigi.html). This pipeline produces the files needed for these resources. 
+In 2023, the [disease models portal](https://diseasemodels.research.its.qmul.ac.uk) was published and in 2024 the pheval benchmarking was completed. To feed these resources, the pipeline was extended and was called `post-process` using [luigi](https://luigi.readthedocs.io/en/stable/running_luigi.html). This pipeline produces the files needed for these resources. 
 
 To execute the pipeline you need at least 1 core of 32GB of RAM:
 
@@ -235,7 +235,7 @@ This will create a copy of the three files into the bundle, which can be useful 
 ```
 module load R/4.4.1
 export R_LIBS_USER=/data/WHRI-Phenogenomics/projects/PhenoDigm2/post_processing_dependencies/r_lib_paths/R/x86_64-pc-linux-gnu-library/4.4.1
-python3 /code/PhenoDigm2/phenodigm2.py post_process --db vTODAY
+python3 /code/PhenoDigm2/phenodigm2.py post-process --db vTODAY
 ```
 
 
