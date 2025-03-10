@@ -10,6 +10,7 @@ from unittest.mock import patch, MagicMock
 import os
 from datetime import datetime
 import sqlite3
+import duckdb
 from pd2.tools import (
     readHeader,
     time,
@@ -141,13 +142,13 @@ def test_get_DBfile(tmp_path):
 
     dbfile = getDBfile(mock_config)
 
-    assert dbfile == os.path.join(dbpath, "phenodigm2-test_db.sqlite")
+    assert dbfile == os.path.join(dbpath, "phenodigm2-test_db.db")
 
 
 # Basic getDBconn test to ensure right arguments are being called.
 def test_getDBconn():
-    with patch("sqlite3.connect") as mock_connect:
-        dbfile = "test_db.sqlite"
+    with patch("duckdb.connect") as mock_connect:
+        dbfile = "test_db.db"
         getDBconn(dbfile)
 
         # Check the right arguments were called.

@@ -57,7 +57,7 @@ class PhenoDigmDB:
 # Create PhenoDigm DB and its tables
 
 def runDBBuild(config):
-    """Set up a SQLite DB, return a db connection."""
+    """Set up a DuckDB, return a db connection."""
     
     pd2tools.log("Creating database")
     

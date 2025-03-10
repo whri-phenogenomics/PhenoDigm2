@@ -7,7 +7,8 @@ These are used throughout the other modules.
 
 
 import os.path
-import sqlite3
+# import sqlite3
+import duckdb
 from datetime import datetime
 from os.path import abspath as abspath
 from os.path import join as join
@@ -76,15 +77,15 @@ def getDBfile(config):
 
     rootdir = abspath(config.db)
     dbname = os.path.basename(rootdir)
-    return join(rootdir, "phenodigm2-"+dbname+".sqlite")        
+    return join(rootdir, "phenodigm2-"+dbname+".db")        
 
 
 def getDBconn(dbfile):
     """Get a connection to the databse"""
     
-    conn = sqlite3.connect(dbfile, timeout=1800)    
+    conn = duckdb.connect(dbfile)
     # This next line enables fetching data by associative array
-    conn.row_factory = sqlite3.Row            
+    # conn.row_factory = sqlite3.Row
     return conn
     
 

@@ -4,10 +4,15 @@ All classes start with prefix 'Model' and extend PhenodigmTable.
 They handle insertion of data into different types of db tables.
 
 @author: Tomasz Konopka
+
+Upgrade from sqlite3 to DuckDB
+
+@author: Diego Pava
 """
 
 import sqlite3
-
+import duckdb
+from duckdb import DuckDBPyConnection
 
 # ############################################################################
 
@@ -42,11 +47,11 @@ class PhenodigmTable:
         if tabname is not None:
             self.tabname = tabname
 
-    def getConn(self):
+    def getConn(self) -> DuckDBPyConnection:
         """Create a connection that returns rows with associative arrays."""
         
-        conn = sqlite3.connect(self.dbfile, timeout=1800)            
-        conn.row_factory = sqlite3.Row            
+        conn = duckdb.connect(self.dbfile)            
+        # conn.row_factory = sqlite3.Row            
         return conn
 
     def countrows(self):
@@ -78,9 +83,10 @@ class PhenodigmTable:
         with conn:
             c = conn.cursor()
             # execute the insert in batches of insertN
-            for x in range(0, len(self.data), self.insertN):                            
-                xdata = self.data[x:x+self.insertN]
-                c.executemany(sql, xdata)
+            # for x in range(0, len(self.data), self.insertN):                            
+            #     xdata = self.data[x:x+self.insertN]
+            #     c.executemany(sql, xdata)
+            c.execute(sql, self.data)
         conn.close()                                                                                
         self.clear()
 
