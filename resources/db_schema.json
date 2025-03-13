@@ -81,7 +81,7 @@
   "gene": {
     "fields": ["id TEXT", "organism TEXT", "symbol TEXT", 
                "name TEXT", "altname TEXT", "type TEXT",
-               "locus TEXT", "withdrawn INT"],
+               "locus TEXT", "withdrawn BOOLEAN"],
     "indexes": { "g_i": "id" }
   },
   
