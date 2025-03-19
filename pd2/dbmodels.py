@@ -10,9 +10,13 @@ Upgrade from sqlite3 to DuckDB
 @author: Diego Pava
 """
 
-import sqlite3
+
+import csv
 import duckdb
+import sqlite3
+import tempfile
 from duckdb import DuckDBPyConnection
+from pd2.tools import row_factory_fetch_all
 
 # ############################################################################
 
@@ -51,7 +55,7 @@ class PhenodigmTable:
         """Create a connection that returns rows with associative arrays."""
         
         conn = duckdb.connect(self.dbfile)            
-        # conn.row_factory = sqlite3.Row            
+        # conn.row_factory = sqlite3.Row
         return conn
 
     def countrows(self):
@@ -77,17 +81,24 @@ class PhenodigmTable:
         sql2 = "( " + ", ".join(self.fieldnames)+" )"
         questionmarks = ["?" for _ in self.fieldnames]
         sql3 = "("+ ", ".join(questionmarks)+" )"
-        sql = sql1 + sql2 + " VALUES " + sql3                
+        sql = sql1 + sql2 + " VALUES " + sql3
 
         conn = self.getConn()
         with conn:
             c = conn.cursor()
-            # execute the insert in batches of insertN
-            # for x in range(0, len(self.data), self.insertN):                            
-            #     xdata = self.data[x:x+self.insertN]
-            #     c.executemany(sql, xdata)
-            c.execute(sql, self.data)
-        conn.close()                                                                                
+            # Create a temporary file with the contents of the query and load into duckdb
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+                csv_writer = csv.writer(f)
+                csv_writer.writerows(self.data)
+
+            try:
+                sql3 =f'SELECT * FROM read_csv(\'{f.name}\', escape=\'"\', delim=\',\')'
+                sql_duck = sql1 + sql2 + sql3
+                c.execute(sql_duck)
+            except Exception as e:
+                raise e
+
+            conn.close()
         self.clear()
 
     def clear(self):
@@ -129,8 +140,9 @@ class PhenodigmSimpleGenerator:
         # execute query and yield one row at a time
         with self.table.getConn() as conn:
             cur = conn.cursor()
-            cur.execute(sql)                
-            for row in cur:                
+            # result = cur.sql(sql).fetchall()
+            result = row_factory_fetch_all(cur.sql(sql))
+            for row in result:
                 yield row  
                                   
         
@@ -192,7 +204,7 @@ class ModelGene(PhenodigmTable):
         
     def addData(self, gene_id=None, organism=None, symbol=None,
                 name=None, altname=None, 
-                type=None, locus=None, withdrawn=1):
+                type=None, locus=None, withdrawn=True):
         """Record one link between an id and a symbol"""
         
         if gene_id == "" or symbol == "":
