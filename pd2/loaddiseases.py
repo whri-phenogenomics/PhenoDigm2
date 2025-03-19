@@ -8,10 +8,14 @@ import gzip
 import json
 from os.path import join as join
 
+from collections import namedtuple
+from duckdb.duckdb import DuckDBPyConnection
+
 from . import tools as pd2tools
 from . import dbmodels as pd2models
 from . import parsers as pd2parsers
 from . import dss as pd2dss
+
 
 # shortcuts
 readHeader = pd2tools.readHeader
@@ -104,7 +108,6 @@ def loadDiseaseData(dbfile, annodir, headersdir):
                                                     
     dgmap_data.save()
 
-
 def getSymbol2Id(dbfile, organism):
     """Query DB and obtain a mapping from active symbols to ids.
     
@@ -116,8 +119,15 @@ def getSymbol2Id(dbfile, organism):
     
     conn = pd2tools.getDBconn(dbfile)
     c = conn.cursor()                
-    c.execute(sql, (organism, ))        
-    for row in c.fetchall():
+    # c.execute(sql, (organism, ))
+
+    # TODO: add the custom method made for this
+    new_fetchall = pd2tools.row_factory_fetch_all(c.execute(sql, (organism, )))
+    # column_names = [desc[0] for desc in c.description]
+    # Row = namedtuple('Row', column_names)
+    # new_fetchall =  [Row(*row)._asdict() for row in c.fetchall()]
+
+    for row in new_fetchall:
         rowsymbol = row["symbol"]        
         if rowsymbol in result:
             # the symbol is already defined
