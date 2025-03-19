@@ -9,11 +9,13 @@ These are used throughout the other modules.
 import os.path
 # import sqlite3
 import duckdb
+from duckdb import DuckDBPyConnection
 from datetime import datetime
 from os.path import abspath as abspath
 from os.path import join as join
 import re
-
+from typing import Any
+from collections import namedtuple
 
 def readHeader(filename, sep=","):
     """Read header definitions from a file."""
@@ -82,14 +84,20 @@ def getDBfile(config):
 
 def getDBconn(dbfile):
     """Get a connection to the databse"""
-    
+    # conn = DBConn(dbfile)
     conn = duckdb.connect(dbfile)
     # This next line enables fetching data by associative array
     # conn.row_factory = sqlite3.Row
     return conn
-    
+
 
 def runProcess(p):
     """Generic function that runs a runnable object."""
     p.run()
-
+    
+# TODO: this partially works but - profiling suggests this could be less efficient with increasing numbers because of the conversion.
+def row_factory_fetch_all(cursor: DuckDBPyConnection) -> list[Any]:
+    """ Wrapper function for duckdb's fecth all to act as sqlite.Row"""
+    column_names = [desc[0] for desc in cursor.description]
+    Row = namedtuple('Row', column_names)
+    return [Row(*row)._asdict() for row in cursor.fetchall()]
