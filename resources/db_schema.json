@@ -26,7 +26,7 @@
   },
     
   "model_phenotype": {
-    "fields": ["id INTEGER", "phenotype TEXT"],
+    "fields": ["id TEXT", "phenotype TEXT"],
     "indexes": { "mp_i_p": "id, phenotype"}
   },
 
