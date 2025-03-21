@@ -118,14 +118,9 @@ def getSymbol2Id(dbfile, organism):
     sql = "SELECT id, symbol, withdrawn FROM gene WHERE organism=?"
     
     conn = pd2tools.getDBconn(dbfile)
-    c = conn.cursor()                
-    # c.execute(sql, (organism, ))
+    c = conn.cursor()
 
-    # TODO: add the custom method made for this
     new_fetchall = pd2tools.row_factory_fetch_all(c.execute(sql, (organism, )))
-    # column_names = [desc[0] for desc in c.description]
-    # Row = namedtuple('Row', column_names)
-    # new_fetchall =  [Row(*row)._asdict() for row in c.fetchall()]
 
     for row in new_fetchall:
         rowsymbol = row["symbol"]        
