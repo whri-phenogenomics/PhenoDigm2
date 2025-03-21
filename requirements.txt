@@ -5,3 +5,5 @@ luigi
 pyyaml>6.0
 pydantic>2.10
 duckdb
+polars
+pyarrow

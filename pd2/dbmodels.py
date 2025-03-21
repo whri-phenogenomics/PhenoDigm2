@@ -14,9 +14,9 @@ Upgrade from sqlite3 to DuckDB
 import csv
 import duckdb
 import sqlite3
-import tempfile
 from duckdb import DuckDBPyConnection
 from pd2.tools import row_factory_fetch_all
+import polars as pl
 
 # ############################################################################
 
@@ -79,25 +79,20 @@ class PhenodigmTable:
         # prepare an insert statement ready for binding
         sql1 = "INSERT INTO " + self.tabname + " "        
         sql2 = "( " + ", ".join(self.fieldnames)+" )"
-        questionmarks = ["?" for _ in self.fieldnames]
-        sql3 = "("+ ", ".join(questionmarks)+" )"
-        sql = sql1 + sql2 + " VALUES " + sql3
+        sql3 = 'FROM temp_df'
+        sql_duck = sql1 + sql2 + sql3
 
         conn = self.getConn()
         with conn:
             c = conn.cursor()
-            # Create a temporary file with the contents of the query and load into duckdb
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-                csv_writer = csv.writer(f)
-                csv_writer.writerows(self.data)
+            # Prepares batches of data into Polars df's for easy loading into DuckDB
+            temp_df = pl.DataFrame(self.data, orient='row', strict=False, schema=self.fieldnames)
 
             try:
-                sql3 =f'SELECT * FROM read_csv(\'{f.name}\', escape=\'"\', delim=\',\')'
-                sql_duck = sql1 + sql2 + sql3
-                c.execute(sql_duck)
+                conn.register("temp_df", temp_df)
+                c.query(sql_duck)
             except Exception as e:
                 raise e
-
             conn.close()
         self.clear()
 
