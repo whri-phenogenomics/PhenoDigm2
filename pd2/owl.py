@@ -176,35 +176,35 @@ def runOwltools(config):
 
     pd2tools.log("Running owltools")    
 
-    Hs_f = join(dbdir, "Hs-all.owl")
-    Mm_f = join(dbdir, "Mm-all.owl")
-    cross_f = join(datadir, "obo/upheno/hp-mp/mp_hp-align-equiv.owl")
+    # Hs_f = join(dbdir, "Hs-all.owl")
+    # Mm_f = join(dbdir, "Mm-all.owl")
+    # cross_f = join(datadir, "obo/upheno/hp-mp/mp_hp-align-equiv.owl")
 
-    # create merged ontology files
-    runMergingOwltools(config, "hp-importer.owl",
-                       "Hs-disease-to-phenotype-O.txt",
-                       "Hs-disease-labels.txt", Hs_f)
-    runMergingOwltools(config, "mp-importer.owl",
-                       "Mm-gene-to-phenotype-O.txt",
-                       "Mm-gene-labels.txt", Mm_f)
+    # # create merged ontology files
+    # runMergingOwltools(config, "hp-importer.owl",
+    #                    "Hs-disease-to-phenotype-O.txt",
+    #                    "Hs-disease-labels.txt", Hs_f)
+    # runMergingOwltools(config, "mp-importer.owl",
+    #                    "Mm-gene-to-phenotype-O.txt",
+    #                    "Mm-gene-labels.txt", Mm_f)
         
-    # avoid parallel comp because owltools needs a lot of memory
-    numcores = 1
+    # # avoid parallel comp because owltools needs a lot of memory
+    # numcores = 1
 
-    # create jobs as runnable class objects    
-    oca = "owltools-cache-"
-    j1 = OwlCompProcess(config, [Hs_f], "HP,HP",
-                        join(dbdir, oca+"hp-hp.txt"))
-    j2 = OwlCompProcess(config, [Mm_f], "MP,MP",
-                        join(dbdir, oca+"mp-mp.txt"))
-    j3 = OwlCompProcess(config, [Mm_f, Hs_f, cross_f], "HP,MP",
-                        join(dbdir, oca+"hp-mp.txt"))    
-    j4 = OwlCompProcess(config, [Mm_f, Hs_f, cross_f], "MP,HP",
-                        join(dbdir, oca+"mp-hp.txt"))    
+    # # create jobs as runnable class objects    
+    # oca = "owltools-cache-"
+    # j1 = OwlCompProcess(config, [Hs_f], "HP,HP",
+    #                     join(dbdir, oca+"hp-hp.txt"))
+    # j2 = OwlCompProcess(config, [Mm_f], "MP,MP",
+    #                     join(dbdir, oca+"mp-mp.txt"))
+    # j3 = OwlCompProcess(config, [Mm_f, Hs_f, cross_f], "HP,MP",
+    #                     join(dbdir, oca+"hp-mp.txt"))    
+    # j4 = OwlCompProcess(config, [Mm_f, Hs_f, cross_f], "MP,HP",
+    #                     join(dbdir, oca+"mp-hp.txt"))    
 
-    # create phenodigm-cache files from ontology comparisons
-    with mp.Pool(numcores) as pool:
-        pool.map(runProcess, [j3, j4, j1, j2])
+    # # create phenodigm-cache files from ontology comparisons
+    # with mp.Pool(numcores) as pool:
+    #     pool.map(runProcess, [j3, j4, j1, j2])
 
     # transfer data from owltools cache into db
     pd2tools.log("Transferring owltools data into db")
