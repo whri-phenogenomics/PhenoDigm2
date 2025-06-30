@@ -25,7 +25,7 @@ phase, and about 4 GB per core for the `score` phase (see below).
 
 ### Software prerequisites
 
-PhenoDigm2 requires `python3` (v. 3.8) and packages `sqlite3` and `requests`. Installation
+PhenoDigm2 requires `python3` (v. 3.11) and packages `sqlite3` and `requests`. Installation
 of the python framework and dependent packages is covered in several web resources.
 For the present application, you should be able to execute `python3` from the command line
 and obtain the interactive python prompt.
