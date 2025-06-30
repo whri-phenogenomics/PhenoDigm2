@@ -17,7 +17,7 @@ post_processing_path <- args[1]
 
 
 # Install/Load packages as needed 
-packages <- c("R.utils", "dplyr", "readr", "data.table", "arrow")
+packages <- c("R.utils", "dplyr", "readr", "data.table", "arrow", "ggplot2")
 
 for (package in packages) {
   if (!requireNamespace(package, quietly = TRUE)) {
@@ -29,9 +29,15 @@ library("dplyr")
 library("readr")
 library(data.table)
 library(arrow)
+library(ggplot2)
 
+
+
+print(nslots)
 # Set the root directory dynamically
 setwd(post_processing_path)
+
+setwd()
 
 # Execute external Rscript
 source("./scripts/auxiliary/hgnc_symbol_checker.R")
@@ -39,7 +45,8 @@ source("./scripts/auxiliary/hgnc_symbol_checker.R")
 
 # import data -------------------------------------------------------------
 
-model_genotype <- fread("./data/phenodigm/model_genotype.tsv.gz") %>%
+model_genotype <- fread("./data/phenodigm/model_genotype.tsv.gz") %>% 
+  # model_genotype <-read_parquet("./data/phenodigm/model_genotype.parquet") %>%
   select(id,gene_id) %>%
   rename(mgi_id = gene_id)
 
@@ -59,11 +66,15 @@ hm_ortho_symbol <- read_delim("./data/auxiliary/one_to_one_orthologs.tsv") %>%
          mgi_id = `Mgi Gene Acc Id`) %>%
   as.data.frame()
 
-
 disease <- fread("./data/phenodigm/disease.tsv.gz") %>%
   select(id,term) %>%
   dplyr::rename(disorder_id = id, disorder_name = term) 
 
+
+gene_disease <- read_delim("./data/phenodigm/disease_gene_mapping.tsv.gz", 
+                           delim = "\t", col_names = TRUE) 
+
+print(length(unique(gene_disease$match)))
 
 gene_disease <- read_delim("./data/phenodigm/disease_gene_mapping.tsv.gz", 
                            delim = "\t", col_names = TRUE) %>%
@@ -83,10 +94,49 @@ gene_disease <- read_delim("./data/phenodigm/disease_gene_mapping.tsv.gz",
 
 length(unique(gene_disease$gene_disease))
 length(unique(gene_disease$hgnc_id))
+length(unique(gene_disease$mgi_id))
+
+gene_disease_orthologs <- gene_disease %>%
+  distinct(mgi_id, .keep_all=TRUE) %>%
+  filter(!is.na(mgi_id)) 
+
+# Check how many non-disease genes
+genes <- read_delim("./data/phenodigm/gene.tsv.gz", 
+                    delim = "\t", col_names = TRUE) %>%
+  filter(organism == "human") %>%
+  filter(!id %in% gene_disease$hgnc_id)
+
+print(length(unique(genes$id)))
+
 
 # import impc data: phenotype associations, viability, all -----------------
 # "Cache" assertions
-geno_pheno_assertions <- fread("./data/impc/genotype-phenotype-assertions-ALL.csv.gz")
+geno_pheno_assertions <- fread("./data/impc/genotype-phenotype-assertions-ALL.csv.gz") 
+
+# Total number of genes with geno-pheno 
+print(length(unique(geno_pheno_assertions$marker_accession_id)))
+
+# Genes with a human orthologe and a geno-pheno annotation
+geno_pheno_with_orthologs <- geno_pheno_assertions %>%
+  filter(marker_accession_id %in% hm_ortho_symbol$mgi_id)
+
+# Have a human ortholog and an geno-pheno annotation
+print(length(unique(geno_pheno_with_orthologs$marker_accession_id)))
+
+# How many are not in disease genes
+geno_pheno_with_orthologs_no_disease_genes <- geno_pheno_with_orthologs %>%
+  rename(mgi_id = marker_accession_id) %>%
+  inner_join(hm_ortho_symbol) %>%
+  filter(!hgnc_id %in% gene_disease$hgnc_id)
+
+# Number of genes with phenotype hits with no disease associated
+print(length(unique(geno_pheno_with_orthologs_no_disease_genes$mgi_id)))
+
+
+assertions_not_in_disease_genes <- geno_pheno_assertions %>%
+  filter(!marker_accession_id %in% gene_disease$mgi_id)
+
+print(length(unique(assertions_not_in_disease_genes$marker_accession_id)))
 
 phenotypes <- geno_pheno_assertions %>%
   dplyr::rename(mgi_id = marker_accession_id) %>%
@@ -124,7 +174,15 @@ viability <- read_delim("./data/impc/viability.csv.gz",
 # "Cache" stats results
 stats_all <- fread("./data/impc/statistical-results-ALL.csv.gz")
 
-all <- stats_all %>%
+length(unique(stats_all$marker_accession_id))
+
+# How many orthologs are in the stats
+orthologs_in_stats <- stats_all %>%
+  filter(marker_accession_id %in% unique(hm_ortho_symbol$mgi_id))
+
+length(unique(orthologs_in_stats$marker_accession_id))
+
+all_filter <- stats_all %>%
   dplyr::rename(mgi_id = marker_accession_id) %>%
   select(mgi_id) %>%
   distinct() %>%
@@ -141,7 +199,7 @@ mouse_symbol = stats_all %>%
   dplyr::select(mgi_id, mm_gene_symbol) %>%
   distinct()
 
-all_disease <- all %>%
+all_disease <- all_filter %>%
   filter(mgi_id %in% unique(gene_disease$mgi_id)) %>%
   mutate(phenotype = ifelse(top_level_mp == "-" & viability =="-","n",
                             ifelse(top_level_mp == "-" & viability =="viable","n","y"))) %>%
@@ -149,6 +207,7 @@ all_disease <- all %>%
 
 table(all_disease$phenotype)
 table(all_disease$viability)
+
 
 all_disease_viability <- all_disease %>%
   mutate(type_phenotype = ifelse(top_level_mp_term_name %in% c("mortality/aging","-") &
@@ -215,9 +274,10 @@ head(disease_genes_impc_categories)
 dim(disease_genes_impc_categories)
 
 ## 2848 with a human orthologue and disease association
-
+## 2938?
 disease_genes_impc_pairs <- gene_disease %>%
   filter(mgi_id %in% disease_genes_impc_categories$mgi_id)
+
 
 genes_mouse_phenotypes <- disease_genes_impc_categories %>%
   filter(phenotype == "y")
@@ -225,7 +285,6 @@ genes_mouse_phenotypes <- disease_genes_impc_categories %>%
 dim(genes_mouse_phenotypes)
 
 ## 2621 with IMPC mouse phenotypes encoded as MP terms
-
 genes_human_phenotypes <- disease_genes_impc_categories %>%
   filter(hpo_annotations == "y")
 
@@ -237,7 +296,7 @@ genes_mouse_human_phenotypes <- genes_mouse_phenotypes %>%
 dim(genes_mouse_human_phenotypes)
 
 ## 2504  with human phenotypes encoded as HPO terms
-
+## 2581
 # phenodigm scores --------------------------------------------------------
 
 ### genes with phenodigm match
@@ -276,6 +335,7 @@ phenodigm_matches <- model_disease_omim_score_no0 %>%
   bind_rows(model_disease_orphanet_score_no0) %>%
   inner_join(mouse_symbol)
 
+
 phenodigm_matches_impc = phenodigm_matches
 
 matches_tidy <- phenodigm_matches_impc %>%
@@ -283,17 +343,59 @@ matches_tidy <- phenodigm_matches_impc %>%
          gene_symbol, description,
          score, query_phenotype, match_phenotype)
 
+head(matches_tidy)
+
+print(length(unique(phenodigm_matches$hgnc_id)))
+
+
+# Distribution plots 
+base <-  ggplot(matches_tidy, aes(y=score))
+histogram <- base +
+  geom_histogram(fill = "grey") +
+  scale_y_continuous(position = "right")
+
+box <- base + 
+  geom_boxplot(fill = "lightblue")
+
+density <- base +
+  geom_density(fill = "lightblue", adjust = 1/4)
+
+histogram
+box
+density
+
+# General stats:
+print("Disease gene match stats")
+table(matches_tidy %>%
+        summarise(
+          min = min(score, na.rm = TRUE),
+          q1 = quantile(score, 0.25, na.rm = TRUE),
+          median = median(score, na.rm = TRUE),
+          mean = mean(score, na.rm = TRUE),
+          q3 = quantile(score, 0.75, na.rm = TRUE),
+          max = max(score, na.rm = TRUE),
+          iqr = IQR(score, na.rm = TRUE)
+        )
+)
 
 # export files for shiny app ----------------------------------------------
 
 
 write.table(phenodigm_matches_impc,
-            "./data/output/phenodigm_matches_DR22.txt",
+            "./data/output/phenodigm_matches_DR23.txt",
             quote = F, sep = "\t", row.names = F)
 
+write_parquet(phenodigm_matches_impc,
+              "./data/output/phenodigm_matches_DR23.parquet",
+              compression="zstd", compression_level=12)
+
 write.table(matches_tidy,
-            "./data/output/phenodigm_matches_tidy_DR22.txt",
+            "./data/output/phenodigm_matches_tidy_DR23.txt",
             quote = F, sep = "\t", row.names = F)
+
+write_parquet(matches_tidy,
+              "./data/output/phenodigm_matches_tidy_DR23.parquet",
+              compression="zstd", compression_level=12)
 
 # gene summary file -------------------------------------------------------
 
@@ -308,7 +410,7 @@ max_score <- phenodigm_matches %>%
 
 gene_summary_df <- hm_ortho_symbol %>%
   left_join(gene_disease_by_gene) %>%
-  mutate(IMPC_pipeline = ifelse(mgi_id %in% all$mgi_id,"yes","no")) %>%
+  mutate(IMPC_pipeline = ifelse(mgi_id %in% all_filter$mgi_id,"yes","no")) %>%
   mutate(IMPC_phenotypes = ifelse(mgi_id %in% genes_mouse_phenotypes$mgi_id,"yes","no") )%>%
   mutate(HPO_phenotypes = ifelse(mgi_id %in% genes_human_phenotypes$mgi_id,"yes","no") )%>%
   mutate(PhenoDigm_match = ifelse (mgi_id %in% unique(phenodigm_matches$mgi_id),
@@ -324,8 +426,13 @@ filter_matches <- gene_summary_df %>%
 
 
 write.table(gene_summary_df ,
-            "./data/output/gene_summary_DR22.txt",
+            "./data/output/gene_summary_DR23.txt",
             quote = F, sep = "\t", row.names = F)
+
+write_parquet(gene_summary_df,
+              "./data/output/gene_summary_DR23.parquet",
+              compression="zstd", compression_level=12)
+
 
 
 # match vs no match -------------------------------------------------------
@@ -333,6 +440,7 @@ write.table(gene_summary_df ,
 genes_score = unique(c(model_disease_orphanet_score_no0$mgi_id,
                        model_disease_omim_score_no0$mgi_id))
 
+# Number of genes with a match
 length(genes_score)
 length(unique(phenodigm_matches$mgi_id))
 
@@ -345,6 +453,9 @@ genes_pheno_hpo_nomatch <- disease_genes_impc_categories %>%
 
 genes_pheno_hpo_nomatch_match <- disease_genes_impc_categories %>%
   mutate(phenodigm_match = ifelse(!mgi_id %in% genes_score,"n","y"))
+
+# Number of no match genes
+length(unique(genes_pheno_hpo_nomatch$mgi_id))
 
 # lethal curation ---------------------------------------------------------
 # Cache omim_curation.tsv
@@ -400,7 +511,27 @@ lethal_humans_check = lethal_humans %>%
 
 
 # PhenoDigm scores IMPC ---------------------------------------------------
+# Not working: 
 
+# Take all of the genes that not associated with a disease (this is what this script is doing)
+# Do we say we do that for gene discovery?
+# Get genes not associated with disease
+modelo_espc <- model_no0 %>%
+  mutate(score =(score_avg_norm + score_max_norm)/2) %>%
+  inner_join(model, by = c("match" = "id")) %>%
+  # inner_join(hm_ortho_symbol) %>%
+  filter(!mgi_id %in% unique(gene_disease$mgi_id))
+
+print(length(unique(modelo_espc$mgi_id)))
+print(length(unique(gene_disease$mgi_id)))
+print(length(unique(gene_disease$mgi_id)))
+
+
+# Get how many have MP annotations
+# Get OMIM diseases with Hp annotations
+# Check how manny genes linked to these 
+# How many have a score over 40
+####################################################################
 model_no0 <- fread("./data/phenodigm/disease_model_association_omim_impc.tsv.gz") %>%
   mutate(score =(score_avg_norm + score_max_norm)/2) %>%
   filter(score > 0) %>%
@@ -412,14 +543,65 @@ model_no0 <- fread("./data/phenodigm/disease_model_association_omim_impc.tsv.gz"
 model_no0_nodisease <- model_no0 %>%
   filter(!mgi_id %in% unique(gene_disease$mgi_id)) %>%
   arrange(-score) %>%
-  select(query, match, mgi_id, hgnc_id, disorder_name, score, 
+  select(query, match, mgi_id, hgnc_id, gene_symbol, disorder_name, score, 
          life_stage,description,
          query_phenotype, match_phenotype) %>%
   filter(score > 40)
 
+
+# Get volcano plot of "other" associations
+model_no0_nodisease_dist <- model_no0 %>%
+  filter(!mgi_id %in% unique(gene_disease$mgi_id))
+
+print(length(unique(model_no0_nodisease_dist$mgi_id)))
+# arrange(-score) %>%
+# select(query, match, mgi_id, hgnc_id, disorder_name, score, 
+#        life_stage,description,
+#        query_phenotype, match_phenotype) %>%
+# filter(score > 40)
+
+# General stats:
+print("PhenoDigm other stats")
+table(model_no0_nodisease_dist %>%
+        summarise(
+          min = min(score, na.rm = TRUE),
+          q1 = quantile(score, 0.25, na.rm = TRUE),
+          median = median(score, na.rm = TRUE),
+          mean = mean(score, na.rm = TRUE),
+          q3 = quantile(score, 0.75, na.rm = TRUE),
+          max = max(score, na.rm = TRUE),
+          iqr = IQR(score, na.rm = TRUE)
+        )
+)
+
+
+violin <- ggplot(model_no0_nodisease_dist, aes(x = 0, y = score)) +
+  geom_violin(fill = "#00AFBB", trim = FALSE, width=0.3) +
+  geom_boxplot(width = 0.02, fill = "white", outlier.shape = NA) +
+  stat_summary(
+    fun.data = "mean_sdl", fun.args = list(mult = 1),
+    geom = "pointrange", color = "black"
+  ) +
+  geom_hline(yintercept = 40, color = "purple", linetype = "dashed", linewidth = 0.8) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    plot.margin = margin(t = 10, r = 10, b = 10, l = 0),
+    legend.position = "none"
+  ) +
+  labs(y = "Score") +
+  labs(x = "PhenoDigm other hits")
+
+violin
+
 write.table(model_no0_nodisease,
-            "./data/output/model_no0_nodisease_DR22.txt",
+            "./data/output/phenodigm_other_dr23.txt",
             quote = F, sep = "\t", row.names = F)
+
+write_parquet(model_no0_nodisease,
+              "./data/output/phenodigm_other_dr23.parquet")
 
 ###########################################################################
 #### impc vs non impc match
@@ -444,7 +626,7 @@ model_nonimpc_disease_omim_score_no0 <- read_delim("./data/phenodigm/disease_mod
 
 model_nonimpc_disease_orphanet_score_no0 <- read_delim("./data/phenodigm/disease_model_association_orphanet_nonimpc.tsv.gz", 
                                                        delim = "\t", 
-                                                       col_names = TRUE) %>%
+                                                       col_names = TRUE, num_threads = nslots ) %>%
   mutate(score =(score_avg_norm + score_max_norm)/2) %>%
   filter(score > 0) %>%
   inner_join(model, by = c("match" = "id"),relationship = "many-to-many") %>%
@@ -461,7 +643,6 @@ phenodigm_matches_mgi <- model_nonimpc_disease_omim_score_no0  %>%
   bind_rows(model_nonimpc_disease_orphanet_score_no0)
 
 b = head(phenodigm_matches_mgi)
-
 
 # comparison --------------------------------------------------------------
 
@@ -520,8 +701,9 @@ max_score_comparison %>%
 # These tables are not entirely necessary but they are a nice to have for summary stats. Not sure what the last table is. 
 table(max_score_comparison$comparison)
 table(max_score_gene_comparison$comparison_gene)
-# table(all_score_comparison$novel_assoc_notgene)
+table(max_score_comparison_final$novel_assoc_notgene)
 
+# table(max_score_comparison_final)
 
 ##########################  Pheval-impc Benchmarking ####################################################
 # Finding all OMIM genes with an IMPC gene
@@ -609,11 +791,18 @@ top_genes_impc_models_tidy <- top_genes_impc_models %>%
 # Write benchmarking files to be read by pheval_impc_phenodigm
 # Write all models file
 write.table(top_genes_all_models_tidy,
-            "./data/output/phenodigm_scores_benchmarking_DR22_all_models.txt",
+            "./data/output/phenodigm_scores_benchmarking_DR23_all_models.txt",
             quote = FALSE, sep = "\t", row.names = FALSE)
+
+write_parquet(top_genes_all_models_tidy,
+              "./data/output/phenodigm_scores_benchmarking_DR23_all_models.parquet",
+              compression="zstd", compression_level=12)
 
 # Write impc models only file
 write.table(top_genes_impc_models_tidy,
-            "./data/output/phenodigm_scores_benchmarking_DR22_impc_models.txt",
+            "./data/output/phenodigm_scores_benchmarking_DR23_impc_models.txt",
             quote = FALSE, sep = "\t", row.names = FALSE)
 
+write_parquet(top_genes_impc_models_tidy,
+              "./data/output/phenodigm_scores_benchmarking_DR23_impc_models.parquet",
+              compression="zstd", compression_level=12)
