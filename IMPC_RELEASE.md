@@ -24,6 +24,8 @@ These instructions assume:
 
 Owltools is a java program for computing similarities between ontology terms. It is required during the database build stage. A compiled copy is available on apocrita at `/data/WHRI-Phenogenomics/software/opt/owltools`. 
 
+Make sure you load a compatible OpenJDK version. As of DR23 on Apocrita: `openjdk/1.8.0_265-b01-gcc-12.2.0` works.
+
 Test that owltools is available and working. 
 
 ```
@@ -33,9 +35,11 @@ Test that owltools is available and working.
 (This should display a long list of command-line arguments.)
 
 
-### Protege
+### Protege or Robot
 
 [Protege](https://protege.stanford.edu/) is a java program and GUI for viewing ontology files. It is required for a manual step during the database build stage.
+
+[Robot](http://robot.obolibrary.org) is a tool for working with OBO. This is availble to use in Apocrita through Apptainer(Singularity). **This is the prefered option**.
 
 
 ### Python environment
@@ -99,8 +103,18 @@ python3 /code/PhenoDigm2/phenodigm2.py download --db vTODAY
 
 The download can take a few minutes. When complete, manually check that the files in the `raw_data` subdirectory contain the expected data. Note that some ontology-related files will be empty or show error messages. This is unfortunate, but normal. The most useful strategy to check the downloads is to compare file sizes against a previous release.
 
+**NOTE**: Transfer the `data_raw/annotations/human_mouse_mapping.txt.gz` from the previous release since the current Ensembl query to produce such file is broken at present. 
+
 After the download, manual intervention is required on two files.
 
+**Option 1: Robot**(recommended)
+- Find file `data_raw/obo/hp.obo` and save contents in owl format to replace `data_raw/obo/hp/hp-edit.owl` using the following command in Apocrita:
+```apptainer run docker://obolibrary/robot robot convert --input /data_raw/obo/hp.obo --output /data_raw/obo/hp/hp-edit.owl ```
+
+- Find file `data_raw/obo/mp.obo` and save contents in owl format to replace `data_raw/obo/mp/mp-edit.owl` using the following command in Apocrita:
+```apptainer run docker://obolibrary/robot robot convert --input /data_raw/obo/mp.obo --output /data_raw/obo/mp/mp-edit.owl ```
+
+**Option 2: Protege**
 - Find file `data_raw/obo/hp.obo` and open it in Protege. Save the contents
   in owl format to replace `data_raw/obo/hp/hp-edit.owl`.
 - Find file `data_raw/obo/mp.obo` and open it in Protege. Save the contents in owl format to replace `data_raw/obo/mp/mp-edit.owl`.
