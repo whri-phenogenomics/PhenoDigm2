@@ -109,10 +109,12 @@ After the download, manual intervention is required on two files.
 
 **Option 1: Robot**(recommended)
 - Find file `data_raw/obo/hp.obo` and save contents in owl format to replace `data_raw/obo/hp/hp-edit.owl` using the following command in Apocrita:
-```apptainer run docker://obolibrary/robot robot convert --input /data_raw/obo/hp.obo --output /data_raw/obo/hp/hp-edit.owl ```
+  
+  - ```apptainer run docker://obolibrary/robot robot convert --input data_raw/obo/hp.obo --output data_raw/obo/hp/hp-edit.owl ```
 
 - Find file `data_raw/obo/mp.obo` and save contents in owl format to replace `data_raw/obo/mp/mp-edit.owl` using the following command in Apocrita:
-```apptainer run docker://obolibrary/robot robot convert --input /data_raw/obo/mp.obo --output /data_raw/obo/mp/mp-edit.owl ```
+  
+  - ```apptainer run docker://obolibrary/robot robot convert --input data_raw/obo/mp.obo --output data_raw/obo/mp/mp-edit.owl ```
 
 **Option 2: Protege**
 - Find file `data_raw/obo/hp.obo` and open it in Protege. Save the contents
