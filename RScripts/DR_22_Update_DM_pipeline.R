@@ -400,7 +400,8 @@ write_parquet(matches_tidy,
 
 # gene summary file -------------------------------------------------------
 
-# Do not keep unique disease ids, this helps separating them in the DMP home tab
+# Do not keep unique disease names, this helps separating them in the DMP home tab
+# NOTE:  Unique id's are kept, names have to be duplicated to get the right amount of rows in the portal. (Two different id's can have the same name.)
 gene_disease_by_gene <- gene_disease %>%
   group_by(hgnc_id) %>%
   summarise(disorder_id = paste0(unique(disorder_id), collapse = "|"),
@@ -438,6 +439,64 @@ write_parquet(gene_summary_df,
 write.fst(gene_summary_df, "./data/output/gene_summary_DR23.fst")
 
 
+# home page gene summary --------------------------------------------------
+
+# Summarise phenodigm match phenotypes by gene symbol and disorder id
+gene_disease_home_page <- matches_tidy  %>%
+   select(
+          disorder_id,
+          gene_symbol,
+          hgnc_id,
+          query_phenotype,
+          match_phenotype) %>%
+group_by(gene_symbol,disorder_id) %>%
+   summarise(
+     query_phenotype=paste(query_phenotype, collapse=","),
+     match_phenotype=paste(match_phenotype, collapse=",")
+   )
+
+# Explode the gene info, to separate diseases by rows
+gene_info <- gene_summary_df%>%
+  mutate(disease_gene = ifelse(disorder_id != "-", "yes", "no")) %>%
+  select(
+    gene_symbol,
+    disease_gene,
+    IMPC_pipeline,
+    IMPC_phenotypes,
+    PhenoDigm_match,
+    max_score,
+    disorder_id,
+    disorder_name
+  ) %>%
+  separate_longer_delim(c("disorder_id","disorder_name"), delim ="|") 
+ 
+  # Join by disorder name and gene name
+ 
+ gene_info_with_phenotypes<- gene_info %>%
+  left_join(gene_disease_home_page, by=c("gene_symbol","disorder_id")) %>%
+  distinct() %>%
+  mutate(query_phenotype = ifelse(!is.na(query_phenotype),query_phenotype,"-")) %>%
+  mutate(match_phenotype = ifelse(!is.na(match_phenotype),match_phenotype,"-"))
+
+ # Summarise as you wish 
+ gene_info_with_phenotypes_reframe <- gene_info_with_phenotypes %>%
+  group_by(gene_symbol) %>%
+  reframe(
+    disease_gene,
+    IMPC_pipeline,
+    IMPC_phenotypes,
+    PhenoDigm_match,
+    max_score,
+    disorder_id=paste(disorder_id, collapse="|"),
+    disorder_name=paste(disorder_name, collapse="|"),
+    query_phenotype=paste(query_phenotype, collapse="|"),
+    match_phenotype=paste(match_phenotype, collapse="|")
+  ) %>%
+  distinct()
+
+# export home page gene summary --------------------------------------------------
+
+write_parquet(gene_info_with_phenotypes_reframe, "./data/output/home_gene_summary_dr23.parquet")
 
 # match vs no match -------------------------------------------------------
 
