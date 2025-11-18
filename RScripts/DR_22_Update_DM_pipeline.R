@@ -17,7 +17,7 @@ post_processing_path <- args[1]
 
 
 # Install/Load packages as needed 
-packages <- c("R.utils", "dplyr", "readr", "data.table", "arrow", "ggplot2")
+packages <- c("R.utils", "dplyr", "readr", "data.table", "arrow", "ggplot2", "fst")
 
 for (package in packages) {
   if (!requireNamespace(package, quietly = TRUE)) {
@@ -30,6 +30,7 @@ library("readr")
 library(data.table)
 library(arrow)
 library(ggplot2)
+library(fst)
 
 
 
@@ -425,13 +426,15 @@ filter_matches <- gene_summary_df %>%
 # export gene summary file ------------------------------------------------
 
 
-write.table(gene_summary_df ,
-            "./data/output/gene_summary_DR23.txt",
-            quote = F, sep = "\t", row.names = F)
+# write.table(gene_summary_df ,
+#             "./data/output/gene_summary_DR23.txt",
+#             quote = F, sep = "\t", row.names = F)
 
 write_parquet(gene_summary_df,
               "./data/output/gene_summary_DR23.parquet",
               compression="zstd", compression_level=12)
+
+write.fst(gene_summary_df, "./data/output/gene_summary_DR23.fst")
 
 
 
@@ -696,6 +699,11 @@ max_score_comparison %>%
     comparison_gene !="impc_gene_novel" &
       comparison == "impc_novel", "impc_gene_disease_novel","-")) -> 
   max_score_comparison_final
+
+## Write table to check max score and new candidate models
+# write.table(max_score_comparison_final,
+#             "./data/output/max_score_comparison_final.tsv",
+#             quote = F, sep = "\t", row.names = F)
 
 
 # These tables are not entirely necessary but they are a nice to have for summary stats. Not sure what the last table is. 
