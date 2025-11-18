@@ -38,8 +38,6 @@ print(nslots)
 # Set the root directory dynamically
 setwd(post_processing_path)
 
-setwd()
-
 # Execute external Rscript
 source("./scripts/auxiliary/hgnc_symbol_checker.R")
 
@@ -574,21 +572,6 @@ lethal_humans_check = lethal_humans %>%
 
 
 # PhenoDigm scores IMPC ---------------------------------------------------
-# Not working: 
-
-# Take all of the genes that not associated with a disease (this is what this script is doing)
-# Do we say we do that for gene discovery?
-# Get genes not associated with disease
-modelo_espc <- model_no0 %>%
-  mutate(score =(score_avg_norm + score_max_norm)/2) %>%
-  inner_join(model, by = c("match" = "id")) %>%
-  # inner_join(hm_ortho_symbol) %>%
-  filter(!mgi_id %in% unique(gene_disease$mgi_id))
-
-print(length(unique(modelo_espc$mgi_id)))
-print(length(unique(gene_disease$mgi_id)))
-print(length(unique(gene_disease$mgi_id)))
-
 
 # Get how many have MP annotations
 # Get OMIM diseases with Hp annotations
