@@ -101,13 +101,13 @@ gene_disease_orthologs <- gene_disease %>%
   distinct(mgi_id, .keep_all=TRUE) %>%
   filter(!is.na(mgi_id)) 
 
-# Check how many non-disease genes
-genes <- read_delim("./data/phenodigm/gene.tsv.gz", 
-                    delim = "\t", col_names = TRUE) %>%
-  filter(organism == "human") %>%
-  filter(!id %in% gene_disease$hgnc_id)
-
-print(length(unique(genes$id)))
+# # Check how many non-disease genes
+# genes <- read_delim("./data/phenodigm/gene.tsv.gz", 
+#                     delim = "\t", col_names = TRUE) %>%
+#   filter(organism == "human") %>%
+#   filter(!id %in% gene_disease$hgnc_id)
+# 
+# print(length(unique(genes$id)))
 
 
 # import impc data: phenotype associations, viability, all -----------------
