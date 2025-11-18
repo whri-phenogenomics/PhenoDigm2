@@ -340,7 +340,7 @@ phenodigm_matches <- model_disease_omim_score_no0 %>%
 phenodigm_matches_impc = phenodigm_matches
 
 matches_tidy <- phenodigm_matches_impc %>%
-  select(disorder_id, disorder_name,
+  select(disorder_id, disorder_name, hgnc_id,
          gene_symbol, description,
          score, query_phenotype, match_phenotype)
 
@@ -400,10 +400,11 @@ write_parquet(matches_tidy,
 
 # gene summary file -------------------------------------------------------
 
+# Do not keep unique disease ids, this helps separating them in the DMP home tab
 gene_disease_by_gene <- gene_disease %>%
   group_by(hgnc_id) %>%
   summarise(disorder_id = paste0(unique(disorder_id), collapse = "|"),
-            disorder_name = paste0(unique(disorder_name), collapse = "|"))
+            disorder_name = paste0(disorder_name, collapse = "|"))
 
 max_score <- phenodigm_matches %>%
   group_by(hgnc_id) %>%
