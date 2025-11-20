@@ -41,8 +41,7 @@
   }, 
   
   "ontology_ontology_mapping": {
-    "fields": ["query TEXT", "match TEXT", 
-    			"simJ REAL", "ic REAL", "lcs TEXT"],
+    "fields": ["query TEXT", "match TEXT", "cs REAL"],
     "indexes": { "oom_qm": "query, match"}
   },
 

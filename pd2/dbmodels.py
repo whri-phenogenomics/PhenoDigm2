@@ -339,9 +339,9 @@ class ModelOntologyOntologyMapping(PhenodigmTable):
     """For insert into ontology-ontology term comparison tables."""    
     
     tabname = "ontology_ontology_mapping"
-    fieldnames = ["query", "match", "simJ", "ic", "lcs"]
+    fieldnames = ["query", "match", "cs"]
     
-    def addData(self, query, match, simJ, ic, lcs):
+    def addData(self, query, match, cs):
         """For this model, accept insertions of particular type only.
         
         Accept insertions of type A, B, data.
@@ -350,9 +350,9 @@ class ModelOntologyOntologyMapping(PhenodigmTable):
         
         if match < query:
             return            
-        self.data.append([query, match, simJ, ic, lcs])
+        self.data.append([query, match, cs])
         if match != query:
-            self.data.append([match, query, simJ, ic, lcs])
+            self.data.append([match, query, cs])
                         
         
 class ModelAssociation(PhenodigmTable):

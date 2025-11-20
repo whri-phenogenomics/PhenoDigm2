@@ -28,7 +28,7 @@ def fillOOMap(dbfile, source_ontology, target_ontology):
     """Create an OntologyOntologyMap object from db."""
     
     ootab = "ontology_ontology_mapping"
-    sql = "SELECT query, match, simJ, ic, lcs FROM "+ootab
+    sql = "SELECT query, match, cs FROM "+ootab
     sql += " WHERE query LIKE '"+source_ontology+"%'"
     sql += " AND match LIKE '"+target_ontology+"%'"
 

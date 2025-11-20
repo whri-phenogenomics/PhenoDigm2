@@ -72,7 +72,7 @@ class IdPhenotypeMap:
             result.append(id+": {"+ ", ".join(sorted(temp))+"}")
         return "\n".join(result)
 
-
+# NOTE: This might not be needed since cs becomes the score.
 def ooscore(simJ, ic):
     """get a score for an ontology/ontology mapping."""
     return math.sqrt(simJ*ic)
@@ -82,27 +82,24 @@ class OOMapData:
     """A container holding scores associated with a
     ontology-ontology mapping."""
     
-    def __init__(self, id, simJ, ic, lcs):
+    def __init__(self, id, cs):
         self.id = id
-        self.simJ = simJ
-        self.ic = ic
-        self.lcs = lcs 
-        self.score = ooscore(simJ, ic) 
+        self.cs = cs
+        self.score = cs
 
     def checkUpdate(self, obj):
         """Update the values of simJ, ic, lcs if new
         set of values increases the score."""
                         
         if obj.score > self.score:
-            self.simJ = obj.simJ
-            self.ic = obj.ic
-            self.lcs = obj.lcs
             self.score = obj.score
-            self.id = obj.id            
+            self.id = obj.id
 
     def __str__(self):
-        result = self.id+ ": ["+str(self.simJ)+", "+str(self.ic)
-        result += ", "+str(self.lcs)+", "+str(self.score)+"]"  
+        # result = self.id+ ": ["+str(self.simJ)+", "+str(self.ic)
+        # result += ", "+str(self.lcs)+", "+str(self.score)+"]"
+
+        result = self.id + ": ["+str(self.score)+"]"
         return result
             
 
@@ -151,7 +148,8 @@ class OntologyOntologyMap:
         if id1 not in self.map:
             self.map[id1] = dict()
             
-        rowentry = OOMapData(id1, row["simJ"], row["ic"], row["lcs"])
+        # rowentry = OOMapData(id1, row["simJ"], row["ic"], row["lcs"])
+        rowentry = OOMapData(id1, row["cs"])
         self.map[id1][id2] = rowentry
 
         if id2 not in self.bestmapped:

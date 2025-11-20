@@ -26,18 +26,19 @@ def loadOneOwlCacheFile(config, owlpair):
     """Transfer data from one owltools-cache file into db."""
         
     _, _, resourcesdir, dbdir = pd2tools.getPD2dirs(config)
-    cachefile = "semsimian-cache-" + owlpair + ".txt.gz"
+    cachefile = "ontology-embeddings-cache-" + owlpair + ".txt.gz"
     pd2tools.log("Loading: " + cachefile, 2)
     cachefilepath = os.path.join(dbdir, cachefile)
     annodir = os.path.join(resourcesdir, "annotations")
 
-    header_file = os.path.join(annodir, "semsimian_cache.header")
+    header_file = os.path.join(annodir, "ontology_embeddings_cache.header")
     header = readHeader(header_file, "\t")
     idindex = header.index("id")
     hitindex = header.index("id_hit")
-    simindex = header.index("simJ")
-    icindex = header.index("ic")
-    lcsindex = header.index("lcs")
+    csindex = header.index("cs")
+    # simindex = header.index("simJ")
+    # icindex = header.index("ic")
+    # lcsindex = header.index("lcs")
     
     # transfer from disk into memory
     mapdata = pd2models.ModelOntologyOntologyMapping(config.dbfile)      
@@ -49,10 +50,11 @@ def loadOneOwlCacheFile(config, owlpair):
             # mapdata.addData(idtext, hittext
             mapdata.addData(
                             fields[idindex].strip(),
-                            fields[hitindex].strip(),                            
-                            fields[simindex].strip(),
-                            fields[icindex].strip(),
-                            fields[lcsindex].strip())
+                            fields[hitindex].strip(),
+                            fields[csindex].strip())
+                            # fields[simindex].strip(),
+                            # fields[icindex].strip(),
+                            # fields[lcsindex].strip())
     # transfer into db
     mapdata.save()
 
