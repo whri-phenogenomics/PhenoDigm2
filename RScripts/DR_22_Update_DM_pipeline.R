@@ -656,8 +656,8 @@ write_parquet(model_no0_nodisease,
 impc_match = genes_pheno_hpo_nomatch_match %>%
   filter(phenodigm_match == "y")
 
-model_nonimpc_disease_omim_score_no0 <- read_delim("./data/phenodigm/disease_model_association_omim_nonimpc.tsv.gz", 
-                                                   delim = "\t", col_names = TRUE) %>%
+model_nonimpc_disease_omim_score_no0 <- open_dataset("./data/phenodigm/disease_model_association_omim_nonimpc.tsv.gz", 
+                                                   format = "tsv", col_names = TRUE) %>%
   mutate(score =(score_avg_norm + score_max_norm)/2) %>%
   filter(score > 0) %>%
   inner_join(model, by = c("match" = "id"),relationship = "many-to-many") %>%
@@ -667,12 +667,13 @@ model_nonimpc_disease_omim_score_no0 <- read_delim("./data/phenodigm/disease_mod
   inner_join(hm_ortho_symbol) %>%
   mutate(gene_disease = paste0(hgnc_id,"_", query)) %>%
   inner_join(disease_genes_impc_pairs) %>%
-  distinct()
+  distinct() %>%
+  collect()
 
 
-model_nonimpc_disease_orphanet_score_no0 <- read_delim("./data/phenodigm/disease_model_association_orphanet_nonimpc.tsv.gz", 
-                                                       delim = "\t", 
-                                                       col_names = TRUE, num_threads = nslots ) %>%
+model_nonimpc_disease_orphanet_score_no0 <- open_dataset("./data/phenodigm/disease_model_association_orphanet_nonimpc.tsv.gz", 
+                                                       format= "tsv", 
+                                                       col_names = TRUE) %>%
   mutate(score =(score_avg_norm + score_max_norm)/2) %>%
   filter(score > 0) %>%
   inner_join(model, by = c("match" = "id"),relationship = "many-to-many") %>%
@@ -682,7 +683,8 @@ model_nonimpc_disease_orphanet_score_no0 <- read_delim("./data/phenodigm/disease
   inner_join(hm_ortho_symbol) %>%
   mutate(gene_disease = paste0(hgnc_id,"_", query)) %>%
   inner_join(disease_genes_impc_pairs) %>%
-  distinct()
+  distinct() %>%
+  collect()
 
 
 phenodigm_matches_mgi <- model_nonimpc_disease_omim_score_no0  %>%
