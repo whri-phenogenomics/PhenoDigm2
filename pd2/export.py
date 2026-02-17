@@ -3,9 +3,10 @@
 @author: Tomasz Konopka
 """
 
-
+import io
 import json
 from os.path import join
+from contextlib import redirect_stdout
 from . import tools as pd2tools
 
 
@@ -66,4 +67,14 @@ def exportTables(config):
     conn = pd2tools.getDBconn(config.dbfile)    
     printOneTable(conn, config.table, colnames, config.where)    
     conn.close()
+
+# Wrapper function to capture stdout with the table
+def return_export_tables(config):
+    """Capture the output of exportTables function."""
+    print_output = io.StringIO()
+    with redirect_stdout(print_output):
+        exportTables(config)
+    return print_output.getvalue()
+
+
 
