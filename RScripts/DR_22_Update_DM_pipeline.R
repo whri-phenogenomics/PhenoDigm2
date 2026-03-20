@@ -395,7 +395,7 @@ violin_score_associated <- ggplot(matches_tidy, aes(x = 0, y = score)) +
   ) +
   geom_hline(
     data = data.frame(yintercept = 40),
-    aes(yintercept = yintercept, , linetype = "Score threshold (40)"),
+    aes(yintercept = yintercept, linetype = "Score threshold (40)"),
     color = "purple", linewidth = 0.8
   ) +
   scale_shape_manual(values = c("Mean ± SD" = 16)) +
@@ -698,7 +698,7 @@ violin_score_predicted <- ggplot(model_no0_nodisease_dist, aes(x = 0, y = score)
   ) +
   geom_hline(
     data = data.frame(yintercept = 40),
-    aes(yintercept = yintercept, , linetype = "Score threshold (40)"),
+    aes(yintercept = yintercept, linetype = "Score threshold (40)"),
     color = "purple", linewidth = 0.8
   )  +
   scale_shape_manual(values = c("Mean ± SD" = 16)) +
@@ -725,7 +725,7 @@ write_parquet(model_no0_nodisease,
 
 # PhenoDigm other is getting quite large, we can split in multiple files under 50MB to comply with GitHub enterprise's limits.
 # 1. Calculate the number of rows per chunk needed to fit the required file size.
-# Setting in_memory_db to 90, resulted in <50MB per saved file
+# Setting in_memory_mb to 90, resulted in <50MB per saved file
 
 in_memory_mb      <- 90
 file_size_mb   <- as.numeric(object.size(model_no0_nodisease)) / (1024^2)
