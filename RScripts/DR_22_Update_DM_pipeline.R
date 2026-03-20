@@ -384,9 +384,43 @@ box <- base +
 density <- base +
   geom_density(fill = "lightblue", adjust = 1/4)
 
+
+violin_score_associated <- ggplot(matches_tidy, aes(x = 0, y = score)) +
+  geom_violin(fill = "#00AFBB", trim = FALSE, width = 0.3, adjust = 0.3) +
+  geom_boxplot(width = 0.02, fill = "white", outlier.shape = NA) +
+  stat_summary(
+    aes(shape = "Mean ± SD"),
+    fun.data = "mean_sdl", fun.args = list(mult = 1),
+    geom = "pointrange", color = "black"
+  ) +
+  geom_hline(
+    aes(yintercept = 40, linetype = "Score threshold (40)"),
+    color = "purple", linewidth = 0.8
+  ) +
+  scale_shape_manual(values = c("Mean ± SD" = 16)) +
+  scale_linetype_manual(values = c("Score threshold (40)" = "dashed")) +
+  guides(
+    shape = guide_legend(title = NULL),
+    linetype = guide_legend(title = NULL, override.aes = list(color = "purple"))
+  ) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    plot.margin = margin(t = 10, r = 10, b = 10, l = 0),
+    legend.position = c(0.9, 0.9)
+  ) +
+  labs(
+    x = "PhenoDigm match hits",
+    y = "PhenoDigm Score"
+  )
+
+
 histogram
 box
 density
+violin_score_associated
 
 # Disease gene(associated) summary stats:
 summary_stats_associated <- matches_tidy %>%
@@ -667,30 +701,36 @@ log_event(score_disease_predicted_max = summary_stats_predicted$max)
 log_event(score_disease_predicted_iqr = summary_stats_predicted$iqr)
 
 # Violin plot for visualisation and cutoff
-violin <- ggplot(model_no0_nodisease_dist, aes(x = 0, y = score)) +
-  geom_violin(fill = "#00AFBB", trim = FALSE, width=0.3) +
+violin_score_predicted <- ggplot(model_no0_nodisease_dist, aes(x = 0, y = score)) +
+  geom_violin(fill = "#00AFBB", trim = FALSE, width=0.3, adjust = 0.3) +
   geom_boxplot(width = 0.02, fill = "white", outlier.shape = NA) +
   stat_summary(
+    aes(shape = "Mean ± SD"),
     fun.data = "mean_sdl", fun.args = list(mult = 1),
     geom = "pointrange", color = "black"
   ) +
-  geom_hline(yintercept = 40, color = "purple", linetype = "dashed", linewidth = 0.8) +
+  geom_hline(
+    aes(yintercept = 40, linetype = "Score threshold (40)"),
+    color = "purple", linewidth = 0.8
+  )  +
+  scale_shape_manual(values = c("Mean ± SD" = 16)) +
+  scale_linetype_manual(values = c("Score threshold (40)" = "dashed")) +
+  guides(
+    shape = guide_legend(title = NULL),
+    linetype = guide_legend(title = NULL, override.aes = list(color = "purple"))
+  ) +
   scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
   theme_minimal() +
   theme(
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
     plot.margin = margin(t = 10, r = 10, b = 10, l = 0),
-    legend.position = "none"
+    legend.position = c(0.9,0.9)
   ) +
-  labs(y = "Score") +
+  labs(y = "PhenoDigm Score") +
   labs(x = "PhenoDigm other hits")
 
-violin
-
-write.table(model_no0_nodisease,
-            "./data/output/phenodigm_other_dr23.txt",
-            quote = F, sep = "\t", row.names = F)
+violin_score_predicted
 
 write_parquet(model_no0_nodisease,
               "./data/output/phenodigm_other_dr23.parquet")
