@@ -394,7 +394,8 @@ violin_score_associated <- ggplot(matches_tidy, aes(x = 0, y = score)) +
     geom = "pointrange", color = "black"
   ) +
   geom_hline(
-    aes(yintercept = 40, linetype = "Score threshold (40)"),
+    data = data.frame(yintercept = 40),
+    aes(yintercept = yintercept, , linetype = "Score threshold (40)"),
     color = "purple", linewidth = 0.8
   ) +
   scale_shape_manual(values = c("Mean ± SD" = 16)) +
@@ -696,7 +697,8 @@ violin_score_predicted <- ggplot(model_no0_nodisease_dist, aes(x = 0, y = score)
     geom = "pointrange", color = "black"
   ) +
   geom_hline(
-    aes(yintercept = 40, linetype = "Score threshold (40)"),
+    data = data.frame(yintercept = 40),
+    aes(yintercept = yintercept, , linetype = "Score threshold (40)"),
     color = "purple", linewidth = 0.8
   )  +
   scale_shape_manual(values = c("Mean ± SD" = 16)) +
