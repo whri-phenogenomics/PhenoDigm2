@@ -1,6 +1,6 @@
-### IMPC DR21 models and PhenoDigm scores
+### IMPC post processing - models and PhenoDigm scores
 ### It requires:
-### 1) tables from PhenoDigm 22 sqlite database in Apocrita
+### 1) tables from PhenoDigm sqlite database in Apocrita
 ### 2) different IMPC files from the ftp repository
 ### 3) Auxiliary files and scripts: orthologue mapping and symbol checker
 ### https://www.gentar.org/orthology-api/api/ortholog/one_to_one/impc/write_to_tsv_file
@@ -445,21 +445,12 @@ log_event(score_disease_associated_iqr = summary_stats_associated$iqr)
 
 # export files for shiny app ----------------------------------------------
 
-
-write.table(phenodigm_matches_impc,
-            "./data/output/phenodigm_matches_DR23.txt",
-            quote = F, sep = "\t", row.names = F)
-
 write_parquet(phenodigm_matches_impc,
-              "./data/output/phenodigm_matches_DR23.parquet",
+              "./data/output/phenodigm_matches_full.parquet",
               compression="zstd", compression_level=12)
 
-write.table(matches_tidy,
-            "./data/output/phenodigm_matches_tidy_DR23.txt",
-            quote = F, sep = "\t", row.names = F)
-
 write_parquet(matches_tidy,
-              "./data/output/phenodigm_matches_tidy_DR23.parquet",
+              "./data/output/phenodigm_matches.parquet",
               compression="zstd", compression_level=12)
 
 # gene summary file -------------------------------------------------------
@@ -491,16 +482,11 @@ filter_matches <- gene_summary_df %>%
 
 # export gene summary file ------------------------------------------------
 
-
-# write.table(gene_summary_df ,
-#             "./data/output/gene_summary_DR23.txt",
-#             quote = F, sep = "\t", row.names = F)
-
 write_parquet(gene_summary_df,
-              "./data/output/gene_summary_DR23.parquet",
+              "./data/output/gene_summary.parquet",
               compression="zstd", compression_level=12)
 
-write.fst(gene_summary_df, "./data/output/gene_summary_DR23.fst")
+write.fst(gene_summary_df, "./data/output/gene_summary.fst")
 
 
 # home page gene summary --------------------------------------------------
@@ -560,7 +546,7 @@ gene_info <- gene_summary_df%>%
 
 # export home page gene summary --------------------------------------------------
 
-write_parquet(gene_info_with_phenotypes_reframe, "./data/output/home_gene_summary_dr23.parquet")
+write_parquet(gene_info_with_phenotypes_reframe, "./data/output/home_gene_summary.parquet")
 
 # match vs no match -------------------------------------------------------
 # Genes with PhenoDigm score
@@ -733,7 +719,25 @@ violin_score_predicted <- ggplot(model_no0_nodisease_dist, aes(x = 0, y = score)
 violin_score_predicted
 
 write_parquet(model_no0_nodisease,
-              "./data/output/phenodigm_other_dr23.parquet")
+              "./data/output/phenodigm_other.parquet")
+
+# PhenoDigm other is getting quite large, we can split in multiple files of 35MB to comply with GitHub enterprise's limits.
+# 1. Calculate the the number of rows per chunk needed to fit the required file size.
+target_mb      <- 90
+file_size_mb   <- as.numeric(object.size(model_no0_nodisease)) / (1024^2)
+total_rows     <- nrow(model_no0_nodisease)
+rows_per_mb    <- total_rows / file_size_mb
+rows_per_chunk <- floor(rows_per_mb * target_mb)
+
+# 2. Write to a new dir, in parquet format. Overwrites if existing. 
+write_dataset(
+  dataset = model_no0_nodisease,
+  path = "./data/output/phenodigm_other",
+  format = "parquet",
+  max_rows_per_file = rows_per_chunk,
+  existing_data_behavior = "overwrite",
+  basename_template = "part-{i}-phenodigm_other.parquet"
+)
 
 ###########################################################################
 #### impc vs non impc match
@@ -905,8 +909,6 @@ stats_df <- lapply(seq_along(json_lines), function(i) {
 
 write_parquet(stats_df,"./data/output/log/post_processing_results.parquet")
 
-df <-read_parquet("./data/output/log/post_processing_results.parquet")
-
 ##########################  Pheval-impc Benchmarking ####################################################
 # Finding all OMIM genes with an IMPC gene
 # Filtered version of stats_all file 
@@ -991,20 +993,13 @@ top_genes_impc_models_tidy <- top_genes_impc_models %>%
 #########################################################################################################
 
 # Write benchmarking files to be read by pheval_impc_phenodigm
-# Write all models file
-write.table(top_genes_all_models_tidy,
-            "./data/output/phenodigm_scores_benchmarking_DR23_all_models.txt",
-            quote = FALSE, sep = "\t", row.names = FALSE)
 
+# Write all models file
 write_parquet(top_genes_all_models_tidy,
-              "./data/output/phenodigm_scores_benchmarking_DR23_all_models.parquet",
+              "./data/output/phenodigm_scores_benchmarking_all_models.parquet",
               compression="zstd", compression_level=12)
 
 # Write impc models only file
-write.table(top_genes_impc_models_tidy,
-            "./data/output/phenodigm_scores_benchmarking_DR23_impc_models.txt",
-            quote = FALSE, sep = "\t", row.names = FALSE)
-
 write_parquet(top_genes_impc_models_tidy,
-              "./data/output/phenodigm_scores_benchmarking_DR23_impc_models.parquet",
+              "./data/output/phenodigm_scores_benchmarking_impc_models.parquet",
               compression="zstd", compression_level=12)
