@@ -723,13 +723,15 @@ violin_score_predicted
 write_parquet(model_no0_nodisease,
               "./data/output/phenodigm_other.parquet", compression="zstd", compression_level=5)
 
-# PhenoDigm other is getting quite large, we can split in multiple files of 35MB to comply with GitHub enterprise's limits.
-# 1. Calculate the the number of rows per chunk needed to fit the required file size.
-target_mb      <- 90
+# PhenoDigm other is getting quite large, we can split in multiple files under 50MB to comply with GitHub enterprise's limits.
+# 1. Calculate the number of rows per chunk needed to fit the required file size.
+# Setting in_memory_db to 90, resulted in <50MB per saved file
+
+in_memory_mb      <- 90
 file_size_mb   <- as.numeric(object.size(model_no0_nodisease)) / (1024^2)
 total_rows     <- nrow(model_no0_nodisease)
 rows_per_mb    <- total_rows / file_size_mb
-rows_per_chunk <- floor(rows_per_mb * target_mb)
+rows_per_chunk <- floor(rows_per_mb * in_memory_mb)
 
 # 2. Write to a new dir, in parquet format. Overwrites if existing. 
 write_dataset(
