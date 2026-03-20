@@ -1,6 +1,6 @@
-### IMPC DR21 models and PhenoDigm scores
+### IMPC post processing - models and PhenoDigm scores
 ### It requires:
-### 1) tables from PhenoDigm 22 sqlite database in Apocrita
+### 1) tables from PhenoDigm sqlite database in Apocrita
 ### 2) different IMPC files from the ftp repository
 ### 3) Auxiliary files and scripts: orthologue mapping and symbol checker
 ### https://www.gentar.org/orthology-api/api/ortholog/one_to_one/impc/write_to_tsv_file
@@ -384,9 +384,44 @@ box <- base +
 density <- base +
   geom_density(fill = "lightblue", adjust = 1/4)
 
+
+violin_score_associated <- ggplot(matches_tidy, aes(x = 0, y = score)) +
+  geom_violin(fill = "#00AFBB", trim = FALSE, width = 0.3, adjust = 0.3) +
+  geom_boxplot(width = 0.02, fill = "white", outlier.shape = NA) +
+  stat_summary(
+    aes(shape = "Mean ± SD"),
+    fun.data = "mean_sdl", fun.args = list(mult = 1),
+    geom = "pointrange", color = "black"
+  ) +
+  geom_hline(
+    data = data.frame(yintercept = 40),
+    aes(yintercept = yintercept, linetype = "Score threshold (40)"),
+    color = "purple", linewidth = 0.8
+  ) +
+  scale_shape_manual(values = c("Mean ± SD" = 16)) +
+  scale_linetype_manual(values = c("Score threshold (40)" = "dashed")) +
+  guides(
+    shape = guide_legend(title = NULL),
+    linetype = guide_legend(title = NULL, override.aes = list(color = "purple"))
+  ) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    plot.margin = margin(t = 10, r = 10, b = 10, l = 0),
+    legend.position = c(0.9, 0.9)
+  ) +
+  labs(
+    x = "PhenoDigm match hits",
+    y = "PhenoDigm Score"
+  )
+
+
 histogram
 box
 density
+violin_score_associated
 
 # Disease gene(associated) summary stats:
 summary_stats_associated <- matches_tidy %>%
@@ -411,22 +446,13 @@ log_event(score_disease_associated_iqr = summary_stats_associated$iqr)
 
 # export files for shiny app ----------------------------------------------
 
-
-write.table(phenodigm_matches_impc,
-            "./data/output/phenodigm_matches_DR23.txt",
-            quote = F, sep = "\t", row.names = F)
-
 write_parquet(phenodigm_matches_impc,
-              "./data/output/phenodigm_matches_DR23.parquet",
-              compression="zstd", compression_level=12)
-
-write.table(matches_tidy,
-            "./data/output/phenodigm_matches_tidy_DR23.txt",
-            quote = F, sep = "\t", row.names = F)
+              "./data/output/phenodigm_matches_full.parquet",
+              compression="zstd", compression_level=5)
 
 write_parquet(matches_tidy,
-              "./data/output/phenodigm_matches_tidy_DR23.parquet",
-              compression="zstd", compression_level=12)
+              "./data/output/phenodigm_matches.parquet",
+              compression="zstd", compression_level=5)
 
 # gene summary file -------------------------------------------------------
 
@@ -457,16 +483,11 @@ filter_matches <- gene_summary_df %>%
 
 # export gene summary file ------------------------------------------------
 
-
-# write.table(gene_summary_df ,
-#             "./data/output/gene_summary_DR23.txt",
-#             quote = F, sep = "\t", row.names = F)
-
 write_parquet(gene_summary_df,
-              "./data/output/gene_summary_DR23.parquet",
-              compression="zstd", compression_level=12)
+              "./data/output/gene_summary.parquet",
+              compression="zstd", compression_level=5)
 
-write.fst(gene_summary_df, "./data/output/gene_summary_DR23.fst")
+write.fst(gene_summary_df, "./data/output/gene_summary.fst")
 
 
 # home page gene summary --------------------------------------------------
@@ -526,7 +547,7 @@ gene_info <- gene_summary_df%>%
 
 # export home page gene summary --------------------------------------------------
 
-write_parquet(gene_info_with_phenotypes_reframe, "./data/output/home_gene_summary_dr23.parquet")
+write_parquet(gene_info_with_phenotypes_reframe, "./data/output/home_gene_summary.parquet")
 
 # match vs no match -------------------------------------------------------
 # Genes with PhenoDigm score
@@ -667,33 +688,60 @@ log_event(score_disease_predicted_max = summary_stats_predicted$max)
 log_event(score_disease_predicted_iqr = summary_stats_predicted$iqr)
 
 # Violin plot for visualisation and cutoff
-violin <- ggplot(model_no0_nodisease_dist, aes(x = 0, y = score)) +
-  geom_violin(fill = "#00AFBB", trim = FALSE, width=0.3) +
+violin_score_predicted <- ggplot(model_no0_nodisease_dist, aes(x = 0, y = score)) +
+  geom_violin(fill = "#00AFBB", trim = FALSE, width=0.3, adjust = 0.3) +
   geom_boxplot(width = 0.02, fill = "white", outlier.shape = NA) +
   stat_summary(
+    aes(shape = "Mean ± SD"),
     fun.data = "mean_sdl", fun.args = list(mult = 1),
     geom = "pointrange", color = "black"
   ) +
-  geom_hline(yintercept = 40, color = "purple", linetype = "dashed", linewidth = 0.8) +
+  geom_hline(
+    data = data.frame(yintercept = 40),
+    aes(yintercept = yintercept, linetype = "Score threshold (40)"),
+    color = "purple", linewidth = 0.8
+  )  +
+  scale_shape_manual(values = c("Mean ± SD" = 16)) +
+  scale_linetype_manual(values = c("Score threshold (40)" = "dashed")) +
+  guides(
+    shape = guide_legend(title = NULL),
+    linetype = guide_legend(title = NULL, override.aes = list(color = "purple"))
+  ) +
   scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
   theme_minimal() +
   theme(
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
     plot.margin = margin(t = 10, r = 10, b = 10, l = 0),
-    legend.position = "none"
+    legend.position = c(0.9,0.9)
   ) +
-  labs(y = "Score") +
+  labs(y = "PhenoDigm Score") +
   labs(x = "PhenoDigm other hits")
 
-violin
-
-write.table(model_no0_nodisease,
-            "./data/output/phenodigm_other_dr23.txt",
-            quote = F, sep = "\t", row.names = F)
+violin_score_predicted
 
 write_parquet(model_no0_nodisease,
-              "./data/output/phenodigm_other_dr23.parquet")
+              "./data/output/phenodigm_other.parquet", compression="zstd", compression_level=5)
+
+# PhenoDigm other is getting quite large, we can split in multiple files under 50MB to comply with GitHub enterprise's limits.
+# 1. Calculate the number of rows per chunk needed to fit the required file size.
+# Setting in_memory_mb to 90, resulted in <50MB per saved file
+
+in_memory_mb      <- 90
+file_size_mb   <- as.numeric(object.size(model_no0_nodisease)) / (1024^2)
+total_rows     <- nrow(model_no0_nodisease)
+rows_per_mb    <- total_rows / file_size_mb
+rows_per_chunk <- floor(rows_per_mb * in_memory_mb)
+
+# 2. Write to a new dir, in parquet format. Overwrites if existing. 
+write_dataset(
+  dataset = model_no0_nodisease,
+  path = "./data/output/phenodigm_other",
+  format = "parquet",
+  max_rows_per_file = rows_per_chunk,
+  existing_data_behavior = "overwrite",
+  basename_template = "part-{i}-phenodigm_other.parquet"
+)
 
 ###########################################################################
 #### impc vs non impc match
@@ -865,8 +913,6 @@ stats_df <- lapply(seq_along(json_lines), function(i) {
 
 write_parquet(stats_df,"./data/output/log/post_processing_results.parquet")
 
-df <-read_parquet("./data/output/log/post_processing_results.parquet")
-
 ##########################  Pheval-impc Benchmarking ####################################################
 # Finding all OMIM genes with an IMPC gene
 # Filtered version of stats_all file 
@@ -951,20 +997,13 @@ top_genes_impc_models_tidy <- top_genes_impc_models %>%
 #########################################################################################################
 
 # Write benchmarking files to be read by pheval_impc_phenodigm
-# Write all models file
-write.table(top_genes_all_models_tidy,
-            "./data/output/phenodigm_scores_benchmarking_DR23_all_models.txt",
-            quote = FALSE, sep = "\t", row.names = FALSE)
 
+# Write all models file
 write_parquet(top_genes_all_models_tidy,
-              "./data/output/phenodigm_scores_benchmarking_DR23_all_models.parquet",
-              compression="zstd", compression_level=12)
+              "./data/output/phenodigm_scores_benchmarking_all_models.parquet",
+              compression="zstd", compression_level=5)
 
 # Write impc models only file
-write.table(top_genes_impc_models_tidy,
-            "./data/output/phenodigm_scores_benchmarking_DR23_impc_models.txt",
-            quote = FALSE, sep = "\t", row.names = FALSE)
-
 write_parquet(top_genes_impc_models_tidy,
-              "./data/output/phenodigm_scores_benchmarking_DR23_impc_models.parquet",
-              compression="zstd", compression_level=12)
+              "./data/output/phenodigm_scores_benchmarking_impc_models.parquet",
+              compression="zstd", compression_level=5)
