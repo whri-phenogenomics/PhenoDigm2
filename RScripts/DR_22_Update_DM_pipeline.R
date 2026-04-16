@@ -36,7 +36,6 @@ library(jsonlite)
 
 
 
-print(nslots)
 # Set the root directory dynamically
 setwd(post_processing_path)
 
