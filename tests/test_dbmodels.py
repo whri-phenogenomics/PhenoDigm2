@@ -1,7 +1,8 @@
 import pytest
-import os
-from pathlib import Path
+import shutil
+from importlib.resources import as_file
 import sqlite3
+from pd2.tools import getBundledResourcesDir
 from pd2.dbmodels import (
     PhenodigmTable,
     PhenodigmSimpleGenerator,
@@ -268,11 +269,16 @@ def mock_db_and_tables(db_path):
             self.dbfile = dbfile
             self.action = action
 
-    # Define the resource dir to fetch db_schema
-    resource_dir = Path.cwd() / "resources"
+    # Seed a temp build dir's resources from the packaged bundle so that
+    # getPD2dirs(config) -> config.db/resources resolves the real db_schema.json
+    build_dir = db_path.parent
+    resource_dir = build_dir / "resources"
+    if not resource_dir.exists():
+        with as_file(getBundledResourcesDir()) as bundled:
+            shutil.copytree(bundled, resource_dir)
 
     # Define a mock configuration to satisfy the requirements of DBBbuild
-    mock_config = MockConfig("", "", resource_dir, db_path, "build")
+    mock_config = MockConfig(str(build_dir), "", str(resource_dir), db_path, "build")
 
     # Run the database build and tables
     runDBBuild(mock_config)

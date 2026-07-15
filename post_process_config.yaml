@@ -1,3 +1,11 @@
-omim_curation_path: "omim_curation.tsv"
-main_r_script_path: "DR_22_Update_DM_pipeline.R"
-hgnc_symbol_checker_script_path: "hgnc_symbol_checker.R"
+# Post-processing config for `phenodigm2 post-process`.
+#
+# The omim curation file and both R scripts ship inside the package and are used
+# by default, so this file is optional. Copy it into the --db directory and
+# uncomment an entry only to override a bundled input with an external path
+# (e.g. a freshly curated omim file, or a locally edited script for a different
+# R version) without modifying the installed package.
+#
+# omim_curation_path: "/path/to/omim_curation.tsv"
+# main_r_script_path: "/path/to/DR_22_Update_DM_pipeline.R"
+# hgnc_symbol_checker_script_path: "/path/to/hgnc_symbol_checker.R"

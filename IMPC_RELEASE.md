@@ -224,24 +224,26 @@ In 2023, the [disease models portal](https://diseasemodels.research.its.qmul.ac.
 
 To execute the pipeline you need at least 1 core of 32GB of RAM:
 
-1. Copy the post_process_config.yaml into the db directory
+The three post-processing inputs — the OMIM curation file (`omim_curation.tsv`)
+and the two R scripts (`DR_22_Update_DM_pipeline.R`, `hgnc_symbol_checker.R`) —
+now ship inside the package (`pd2/resources`, `pd2/rscripts`) and are used by
+default. They are copied into the `--db` bundle at run time, so you can edit the
+copies there without touching the install. **No config is required for a
+standard run.**
+
+To override a bundled input with an external file (e.g. a freshly curated OMIM
+file, or a locally edited script for a different R version), copy the config
+into the db directory and uncomment the relevant entry:
 ```
 cp -r /code/PhenoDigm2/post_process_config.yaml vTODAY/
 ```
-2. Using a text editor of your choice (e.g nano) edit `post_process_config.yaml` to write the path to the following files :
-- "omim_curation.tsv"
-- "DR_22_Update_DM_pipeline.R
-- "hgnc_symbol_checker.R"
-
-Both R scripts are within this repo, so you could pass the following paths and the omim file is available in the HPC PhenoDigm2 directory, so as an example use:
 ```
 post_process_config.yaml
 
-omim_curation_path: "Path/to/omim/curation/file/omim_curation.tsv"
-main_r_script_path: "code/PhenoDigm2/RScripts/DR_22_Update_DM_pipeline.R"
-hgnc_symbol_checker_script_path: "code/PhenoDigm2/RScripts/auxiliary/hgnc_symbol_checker.R"
+# omim_curation_path: "/path/to/omim_curation.tsv"
+# main_r_script_path: "/path/to/DR_22_Update_DM_pipeline.R"
+# hgnc_symbol_checker_script_path: "/path/to/hgnc_symbol_checker.R"
 ```
-This will create a copy of the three files into the bundle, which can be useful for tracking.
 
 3. Load a version of R and run the pipeline
 

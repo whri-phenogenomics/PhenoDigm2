@@ -7,6 +7,7 @@ from . import tools as pd2tools
 import luigi
 from luigi import Task, LocalTarget
 import os
+from importlib.resources import as_file
 from pathlib import Path
 import requests
 from typing import Dict
@@ -177,26 +178,54 @@ def export_tables(config):
             f_out.write(temp_table)
 
 
+def _copy_input(override, bundled, dest_dir):
+    """Copy a post-processing input (omim file or R script) into dest_dir.
+
+    Uses the external override path when the yaml provides one, otherwise the
+    copy bundled in the package (extracted to a real path via ``as_file``). The
+    file is copied into the --db bundle so it can be edited there without
+    touching the installed package.
+    """
+    if override is not None:
+        shutil.copy2(override, dest_dir)
+    else:
+        with as_file(bundled) as src:
+            shutil.copy2(src, dest_dir)
+
+
 def relocate_external_resources(config):
     rootdir = Path(config.db).resolve()
 
     # Set the target path to extract using post_process_paths
     output_path = post_process_paths(config)
 
-    # Set the path for the config.yaml file
-    post_proc_paths = pd2PostProcConfig.load_config(
-        Path(rootdir, "post_process_config.yaml")
-    )
+    # Load overrides from the yaml if present; otherwise use bundled defaults.
+    config_file = Path(rootdir, "post_process_config.yaml")
+    if config_file.exists():
+        post_proc_paths = pd2PostProcConfig.load_config(config_file)
+    else:
+        post_proc_paths = pd2PostProcConfig.PostProcessConfig()
 
-    # List of tuples with source path and target path
-    src_dest = [
-        (post_proc_paths.omim_curation_path, output_path["data_aux"]),
-        (post_proc_paths.main_r_script_path, output_path["scripts"]),
-        (post_proc_paths.hgnc_symbol_checker_script_path, output_path["scripts_aux"]),
-    ]
-    # Copy the files
-    for tup in src_dest:
-        shutil.copy2(tup[0], tup[1])
+    # The omim curation file and both R scripts default to the copies bundled in
+    # the package; the yaml may override any of them with an external path (e.g.
+    # a freshly curated omim file or a locally edited script).
+    resources = pd2tools.getBundledResourcesDir()
+    rscripts = pd2tools.getBundledRScriptsDir()
+    _copy_input(
+        post_proc_paths.omim_curation_path,
+        resources / "omim_curation.tsv",
+        output_path["data_aux"],
+    )
+    _copy_input(
+        post_proc_paths.main_r_script_path,
+        rscripts / "DR_22_Update_DM_pipeline.R",
+        output_path["scripts"],
+    )
+    _copy_input(
+        post_proc_paths.hgnc_symbol_checker_script_path,
+        rscripts / "auxiliary" / "hgnc_symbol_checker.R",
+        output_path["scripts_aux"],
+    )
 
 
 def run_post_processing_analysis(config):

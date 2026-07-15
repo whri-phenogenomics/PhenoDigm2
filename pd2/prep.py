@@ -7,12 +7,13 @@ import gzip
 import json
 import os
 import os.path
+from importlib.resources import as_file
 from os.path import join as join
 import requests
 import time
 import shutil
 import xml.etree.ElementTree as XML
-from . import tools as pd2tools 
+from . import tools as pd2tools
 
 
 # ############################################################################
@@ -120,17 +121,30 @@ def fetchUsingXmlQuery(urlpath, querybase, filename=None,
 # ############################################################################
 # Carry out files downloads
 
+def seedBundledResources(resourcesdir):
+    """Copy the resources bundled in the package into resourcesdir.
+
+    Called when a build directory has no resources folder yet, so a freshly
+    installed package is self-contained. An existing resources folder is never
+    overwritten (the caller only invokes this when it is missing).
+    """
+
+    pd2tools.log("Seeding resources from package bundle")
+    bundled = pd2tools.getBundledResourcesDir()
+    with as_file(bundled) as bundled_path:
+        shutil.copytree(bundled_path, resourcesdir)
+
+
 def runDirPrep(config):
     """Prepare directory structure."""
 
     pd2tools.log("Preparing directory structure")
 
     rootdir, datadir, resourcesdir, dbdir = pd2tools.getPD2dirs(config)
-    
+
     if not os.path.exists(resourcesdir):
-        pd2tools.log("Missing directory resources")
-        raise Exception("Missing resources directory")
-    
+        seedBundledResources(resourcesdir)
+
     if not os.path.exists(datadir):
         os.makedirs(datadir)
     

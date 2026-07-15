@@ -120,10 +120,22 @@ def test_run_dir_prep_existing_resources_dir(mock_pd2dirs):
     assert mock_pd2dirs["dbdir"].exists()
 
 
-# Test raising exception when resources is missing
-def test_run_dir_prep_missing_resources_dir(mock_pd2dirs):
-    with pytest.raises(Exception, match="Missing resources directory"):
-        runDirPrep(mock_pd2dirs)
+# Test that a missing resources dir is seeded from the packaged bundle
+def test_run_dir_prep_seeds_missing_resources_dir(mock_pd2dirs):
+    resourcesdir = mock_pd2dirs["resourcesdir"]
+    # No resources dir exists yet; runDirPrep should seed it from the bundle
+    assert not resourcesdir.exists()
+    runDirPrep(mock_pd2dirs)
+
+    # The resources dir is created and populated from the packaged bundle
+    assert resourcesdir.exists()
+    assert (resourcesdir / "db_schema.json").exists()
+    assert (resourcesdir / "catalog.xml").exists()
+    assert (resourcesdir / "annotations").is_dir()
+
+    # datadir and dbdir are still created as before
+    assert mock_pd2dirs["datadir"].exists()
+    assert mock_pd2dirs["dbdir"].exists()
 
 
 # Test runDownloads

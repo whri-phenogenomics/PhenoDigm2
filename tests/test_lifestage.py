@@ -4,10 +4,12 @@ Tests for contents of pd2/scoring.py
 '''
 
 import unittest
-from os.path import join, dirname
 from pd2.loadmodels import load_life_stages
+from pd2.tools import getBundledResourcesDir
 
-life_stage_file = join("resources", "annotations", "impc_life_stages.csv")
+life_stage_file = str(
+    getBundledResourcesDir() / "annotations" / "impc_life_stages.csv"
+)
 
 
 class LifeStageTests(unittest.TestCase):

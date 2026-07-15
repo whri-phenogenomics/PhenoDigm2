@@ -1,0 +1,32 @@
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[project]
+name = "phenodigm2"
+version = "0.1.0"
+description = "Build phenotype annotation databases and compute PhenoDigm2 scores"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "luigi>=3.6.0",
+    "pydantic>2.10",
+    "pyyaml>6.0",
+    "requests>=2.32.5",
+    "urllib3<2.0",
+]
+
+[project.scripts]
+phenodigm2 = "pd2.cli:main"
+phenodigm = "pd2.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.1",
+    "ruff>=0.3.0",
+]
+
+# Flat (non-src) layout: the import package is the root-level pd2/ directory.
+[tool.uv.build-backend]
+module-name = "pd2"
+module-root = ""
