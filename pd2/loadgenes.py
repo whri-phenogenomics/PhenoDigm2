@@ -6,11 +6,13 @@
 import csv
 import gzip
 from os.path import join as join
+import polars as pl
 
 from . import tools as pd2tools
 from . import dbmodels as pd2models
 from . import parsers as pd2parsers
 from . import dss as pd2dss
+from pathlib import Path
 
 readHeader = pd2tools.readHeader
 
@@ -62,17 +64,83 @@ def loadGeneData(dbfile, annodir, headersdir):
     # actually send to db
     gene_data.save()
         
-    return set(parser.genes.keys())    
+    return set(parser.genes.keys())
+
+def _write_ensembl_orthologs(annodir, headersdir) -> None:
+    """ Writes human_mouse_mappings.txt.gz from Ensembl using human, homolog and mouse data.
+    This is needed since the human_mouse_mapping query results from Ensembl are broken (returns HTML)
+    This is a makeshift approach to download, human, human-homolog, and mouse data to recreate human_mouse_mapping.txt.gz
+
+        returns: None
+    """
+    pd2tools.log("Writing Ensembl human mouse mappings", 3)  
+    # Path to files
+    human_ensembl_path = Path(annodir, "human_genes_ensembl.txt.gz")
+    homolog_ensembl_path = Path(annodir, "human_to_homolog_ensembl.txt.gz" )
+    mouse_ensembl_path = Path(annodir, "mouse_genes_ensembl.txt.gz")
+
+    # Column headers
+    human_file_header = Path(headersdir, "human_genes_ensembl.header")
+    human_homolog_header = Path(headersdir, "human_to_homolog_ensembl.header")
+    mouse_file_header = Path(headersdir, "mouse_genes_ensembl.header")
+    human_mouse_mapping_header = Path(headersdir, "human_mouse_mapping.header")
+
+    
+    try:
+        # Read files. Filter out homology == null we are accepting: one2one, many2many, one2many at this specific file
+        human = pl.read_csv(
+            human_ensembl_path,
+            separator="\t",
+            has_header=False,
+            new_columns=readHeader(human_file_header, "\t"),
+        )
+        homolog = pl.read_csv(
+            homolog_ensembl_path,
+            separator="\t",
+            has_header=False,
+            new_columns=readHeader(human_homolog_header, "\t"),
+        ).filter(pl.col("mmusculus_homolog_orthology_type").is_not_null())
+        mouse = pl.read_csv(
+            mouse_ensembl_path,
+            separator="\t",
+            has_header=False,
+            new_columns=readHeader(mouse_file_header, "\t"),
+        )
+
+        # Join humans to homologs
+        human_homolog = human.join(homolog, on="human_ensembl_gene_id", how="inner")
+
+        # Join human/homologs to mouse
+        # Select columns based on expected headers at readEnsemblOrthologs
+        human_mouse = (
+            human_homolog
+            .join(mouse, on='mouse_ensembl_gene_id', how='inner')
+            .filter(pl.col('hgnc_id').is_not_null() & pl.col('mgi_id').is_not_null())
+            .select(readHeader(human_mouse_mapping_header, "\t"))
+            .unique()
+        )
+        human_mouse_mapping_path = Path(annodir, "human_mouse_mapping.txt.gz")
+        human_mouse.write_csv(human_mouse_mapping_path,  separator='\t', compression='gzip', include_header=False)
+        pd2tools.log("Complete", 3) 
+
+    except Exception as e:
+        pd2tools.log(f"Error - could not write human_mouse_mapping.txt.gz: {e}", 3)
+        raise
         
- 
 def readEnsemblOrthologs(annodir, headersdir, genes):
     """Read a file from Ensemble and extract orthologs.
     
     returns: dictionary with orthologs.
     """
-                
-    file_mh = join(annodir, "human_mouse_mapping.txt.gz")     
-    header_mh = join(headersdir, "human_mouse_mapping.header")
+          
+    file_mh = Path(annodir, "human_mouse_mapping.txt.gz")     
+    header_mh = Path(headersdir, "human_mouse_mapping.header")
+
+    # We might need to use an older version of human_mouse_mapping.txt, in case it's not there, write a new one.
+    if file_mh.exists():
+        pd2tools.log(f"Using existing {file_mh}", 3)
+    else:
+        _write_ensembl_orthologs(annodir, headersdir)
     
     # figure out what data is in what position in the table
     mhheader = readHeader(header_mh, "\t")
@@ -152,8 +220,8 @@ def readMGIOrthologs(annodir, headersdir, genes):
             orthologset[orthog].addPair(organism, geneid)
         
     return orthologset
-    
-    
+
+
 def loadOrthologData(dbfile, annodir, headersdir, genes):
     """Transfer mouse-human gene associations.
     
@@ -204,4 +272,3 @@ def runLoadGenes(config):
     genes = loadGeneData(dbfile, annodir, headersdir)
     pd2tools.log("Loading: gene orthologs", 2)  
     loadOrthologData(dbfile, annodir, headersdir, genes)
-

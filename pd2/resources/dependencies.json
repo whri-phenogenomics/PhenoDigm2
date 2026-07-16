@@ -96,9 +96,9 @@
   },  
   "bioMart": {
     "comment": "Generic gene annotations from bioMart",
-    "query": ["human_mouse_mapping"],
+    "query": ["human_genes_ensembl", "human_to_homolog_ensembl", "mouse_genes_ensembl"],
   	"url": "http://www.ensembl.org/biomart/martservice?query=",
   	"targetdir": "annotations",  	
-  	"filename": [""]
+  	"filename": ["human_genes_ensembl.txt", "human_to_homolog_ensembl.txt", "mouse_genes_ensembl.txt"]
   }
 }
