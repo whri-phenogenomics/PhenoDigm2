@@ -107,6 +107,93 @@ class TestPhenodimgtable:
         # check self data is empty after save
         assert phenod_table.data == []
 
+    def test_save_batches_accepts_generators_without_changing_data(
+        self, setup_phenodigmtable
+    ):
+        phenod_table = setup_phenodigmtable
+        phenod_table.data = [[99, "unsaved"]]
+
+        def batches():
+            yield ((4, "query4"),)
+            yield ((row_id, f"query{row_id}") for row_id in (5, 6))
+
+        phenod_table.save_batches(batches())
+
+        with phenod_table.getConn() as conn:
+            rows = conn.execute(
+                f"SELECT id, query FROM {phenod_table.tabname} WHERE id >= 4 "
+                "ORDER BY id"
+            ).fetchall()
+
+        assert [tuple(row) for row in rows] == [
+            (4, "query4"),
+            (5, "query5"),
+            (6, "query6"),
+        ]
+        assert phenod_table.data == [[99, "unsaved"]]
+
+    def test_save_batches_rolls_back_and_closes_connection(
+        self, setup_phenodigmtable, monkeypatch
+    ):
+        phenod_table = setup_phenodigmtable
+        connection = sqlite3.connect(phenod_table.dbfile)
+
+        class TrackingConnection:
+            def __init__(self, wrapped):
+                self.wrapped = wrapped
+                self.committed = False
+                self.rolled_back = False
+                self.closed = False
+
+            def cursor(self):
+                return self.wrapped.cursor()
+
+            def commit(self):
+                self.committed = True
+                self.wrapped.commit()
+
+            def rollback(self):
+                self.rolled_back = True
+                self.wrapped.rollback()
+
+            def close(self):
+                self.closed = True
+                self.wrapped.close()
+
+        tracking_connection = TrackingConnection(connection)
+        monkeypatch.setattr(
+            phenod_table, "getConn", lambda: tracking_connection
+        )
+
+        with pytest.raises(sqlite3.IntegrityError):
+            phenod_table.save_batches(
+                iter(([(4, "query4")], [(1, "duplicate primary key")]))
+            )
+
+        assert tracking_connection.rolled_back
+        assert not tracking_connection.committed
+        assert tracking_connection.closed
+        with sqlite3.connect(phenod_table.dbfile) as verification_connection:
+            count = verification_connection.execute(
+                f"SELECT COUNT(*) FROM {phenod_table.tabname} WHERE id = 4"
+            ).fetchone()[0]
+        assert count == 0
+
+    def test_save_preserves_data_when_insertion_fails(self, setup_phenodigmtable):
+        phenod_table = setup_phenodigmtable
+        pending_data = [[4, "query4"], [1, "duplicate primary key"]]
+        phenod_table.data = pending_data.copy()
+
+        with pytest.raises(sqlite3.IntegrityError):
+            phenod_table.save()
+
+        assert phenod_table.data == pending_data
+        with phenod_table.getConn() as conn:
+            count = conn.execute(
+                f"SELECT COUNT(*) FROM {phenod_table.tabname} WHERE id = 4"
+            ).fetchone()[0]
+        assert count == 0
+
     # Test for clear
     def test_clear(self, setup_phenodigmtable):
         phenod_table = setup_phenodigmtable

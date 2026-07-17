@@ -26,6 +26,9 @@ class MockResponse:
     def iter_content(self, *args, **kwargs):
         yield self.content
 
+    def raise_for_status(self):
+        pass
+
     # Mock requests.close() behaviour
     def close(self):
         pass

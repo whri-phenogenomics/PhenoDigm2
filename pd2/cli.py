@@ -12,6 +12,7 @@ from sys import exit
 from . import load
 from . import dbbuild
 from . import export
+from . import ontology_mapping
 from . import owl
 from . import prep
 from . import query
@@ -20,6 +21,7 @@ from . import solr
 from . import status
 from . import tools
 from . import post_process
+
 
 
 # ############################################################################
@@ -95,6 +97,14 @@ def build_parser():
                         help="minimal ic for owltools output",
                         default=2.5)
 
+    # processing Phenio mappings to obtain ontology term-term similarities
+    parser.add_argument("--ontology_mapping", action="store",
+                        help="complete command to TL ontology mapping (phenio files)",
+                        default="ontology_mapping")
+    parser.add_argument("--ontology_mapping_min_ic", action="store",
+                        help="minimal ic for ontology_mapping output",
+                        default=2.5)
+
     # creating solr core, server addresses, new sets of thresholds
     parser.add_argument("--solr_url", action="store",
                         help="url for communicating with solr",
@@ -113,11 +123,25 @@ def build_parser():
                         default=2.2)
 
     # determining what part of the calculation to perform
-    parser.add_argument("action", action="store",
-                        help="Type of calculation/action to perform",
-                        choices=["download", "build", "owltools", "score",
-                                 "index", "solr", "query", "export", "compute",
-                                 "status", "post-process"])
+    parser.add_argument(
+        "action",
+        action="store",
+        help="Type of calculation/action to perform",
+        choices=[
+            "download",
+            "build",
+            "owltools",
+            "ontology_mapping",
+            "score",
+            "index",
+            "solr",
+            "query",
+            "export",
+            "compute",
+            "status",
+            "post-process",
+        ],
+    )
 
     return parser
 
@@ -161,6 +185,8 @@ def main(argv=None):
     if config.action == "owltools":
         # owl.runOwltools(config)
         owl.loadOwlCacheFiles(config)
+    if config.action == "ontology_mapping":
+        ontology_mapping.run_ontology_mapping_processing(config)
     if config.action == "score":
         score.runScoring(config)
     if config.action == "index":

@@ -82,16 +82,26 @@ navigate to that address in a browser; the browser should display the solr dashb
 
 ## Building a database
 
-To begin a database build, create a new directory and copy the `resources` from the code repository into that new directory.
+To begin a database build, create a new directory 
 
 ```
 cd /data/PhenoDigm2/
 # create new directory - replace TODAY by a version identifier, e.g. a date 
 mkdir vTODAY
-cp -r /code/PhenoDigm2/resources vTODAY/
 ```
 
 Activate the python environment. Then download all the required raw data (IMPC, MGI, obofoundry, HGNC, Ensemble, OMIM, ORPHANET).
+
+Before each **download** run, retrieve the latest file URLs for the Semsimian Zenodo
+concept record:
+
+```
+uvx zenodo_get -w "zenodo_urls" 18474575
+```
+
+Inspect `zenodo_urls` to find the latest version-specific record ID, then update
+the Semsimian Zenodo URL in `pd2/resources/dependencies.json` with that
+record ID.
 
 **NOTE**: To download OMIM data we require an OMIM API key. This can be passed as a local global variable: `OMIM_API_KEY`. If no key/invalid key is passed, morbidmap and mimTitle and  will contain an error. 
 ```
@@ -103,7 +113,9 @@ python3 /code/PhenoDigm2/phenodigm2.py download --db vTODAY
 
 The download can take a few minutes. When complete, manually check that the files in the `raw_data` subdirectory contain the expected data. Note that some ontology-related files will be empty or show error messages. This is unfortunate, but normal. The most useful strategy to check the downloads is to compare file sizes against a previous release.
 
-**NOTE**: Transfer the `data_raw/annotations/human_mouse_mapping.txt.gz` from the previous release since the current Ensembl query to produce such file is broken at present. 
+The resources directory should have been copied into vTODAY. 
+
+**NOTE**: Check `data_raw/annotations/human_mouse_mapping.txt.gz` and decide if you want the version from the previous release or the temporary solution. This happends because the current Ensembl query to produce such file is broken at present. 
 
 After the download, manual intervention is required on two files.
 
@@ -255,5 +267,3 @@ module load R/4.4.1
 export R_LIBS_USER=/data/WHRI-Phenogenomics/projects/PhenoDigm2/post_processing_dependencies/r_lib_paths/R/x86_64-pc-linux-gnu-library/4.4.1
 python3 /code/PhenoDigm2/phenodigm2.py post-process --db vTODAY
 ```
-
-

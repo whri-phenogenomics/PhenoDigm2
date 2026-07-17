@@ -66,7 +66,17 @@ class PhenodigmTable:
 
     def save(self):
         """Send contents of self.data to the database table."""
-        
+
+        batches = (
+            self.data[x:x+self.insertN]
+            for x in range(0, len(self.data), self.insertN)
+        )
+        self.save_batches(batches)
+        self.clear()
+
+    def save_batches(self, batches):
+        """Insert batches of rows using one connection and transaction."""
+
         # prepare an insert statement ready for binding
         sql1 = "INSERT INTO " + self.tabname + " "        
         sql2 = "( " + ", ".join(self.fieldnames)+" )"
@@ -75,14 +85,16 @@ class PhenodigmTable:
         sql = sql1 + sql2 + " VALUES " + sql3                
 
         conn = self.getConn()
-        with conn:
-            c = conn.cursor()
-            # execute the insert in batches of insertN
-            for x in range(0, len(self.data), self.insertN):                            
-                xdata = self.data[x:x+self.insertN]
-                c.executemany(sql, xdata)
-        conn.close()                                                                                
-        self.clear()
+        try:
+            cursor = conn.cursor()
+            for batch in batches:
+                cursor.executemany(sql, batch)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
 
     def clear(self):
         """Remove everything from the current data store."""
@@ -96,12 +108,6 @@ class PhenodigmTable:
         with conn:
             conn.cursor().execute(sql)
         conn.close()
-
-    def getall(self):
-        """Retrieve all the data from this table."""
-        
-        herefields = ", ".join(self.fieldnames)
-        sql = "SELECT "+herefields+" FROM "+self.tabname
 
     def __repr__(self):
         return f"{self.data}"
@@ -373,4 +379,3 @@ class ModelAssociation(PhenodigmTable):
 
     def addDataArray(self, arr):
         self.data.append(arr)
-

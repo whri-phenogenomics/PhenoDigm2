@@ -5,6 +5,15 @@
   	"targetdir": "obo",
   	"filename": ["hp.obo", "mp.obo", "doid.obo"]	  	
    },
+   "semsimian": {
+    "comment": "Phenio semantic similarity files",
+    "url": "https://zenodo.org/api/records/18474575/files/{filename}/content",
+    "targetdir": "obo",
+    "filename": [
+      "HP_vs_HP_semsimian_phenio.tsv.tar.gz",
+      "HP_vs_MP_semsimian_phenio.tsv.tar.gz"
+    ]
+  },
   "IMPC_sr": {
   	"comment": "IMPC statistical results via live www",
 	"query": [""],

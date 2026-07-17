@@ -69,6 +69,7 @@ def fetchFromURL(urlpath, filename=None, outdir=None,
     # download the file
     pd2tools.log("Downloading: "+filename, 2)            
     r = requests.get(url=urlpath, stream=True)
+    r.raise_for_status()
     if tocompress:
         with gzip.GzipFile(fullpath, "wb") as f:
             writeChunks(r, f)                        
@@ -187,8 +188,19 @@ def runDownloads(config):
                 if nowid == 'OMIM':
                     secret = os.getenv('OMIM_API_KEY')
                     nowurl += f'{secret}/' 
-                for f in nowset["filename"]:
-                     fetchFromURL(nowurl + f, outdir=nowdir)                                    
+            for filename in nowset["filename"]:
+                # Semsimian is currently the only dependency using a Zenodo URL
+                # where the filename must be inserted before the /content endpoint.
+                if "{filename}" in nowurl:
+                    download_url = nowurl.format(filename=filename)
+                else:
+                    download_url = nowurl + filename
+
+                fetchFromURL(
+                    download_url,
+                    filename=filename,
+                    outdir=nowdir,
+                )                                
         
     # Parse dependency file for ontology data
     catalog_file = join(resourcesdir, "catalog.xml")
