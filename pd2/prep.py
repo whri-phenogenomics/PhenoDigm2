@@ -136,21 +136,37 @@ def seedBundledResources(resourcesdir):
         shutil.copytree(bundled_path, resourcesdir)
 
 
-def runDirPrep(config):
-    """Prepare directory structure."""
+def _prepareDirectoryLayout(config, *, exist_ok):
+    """Create the standard build directories and seed missing resources."""
 
-    pd2tools.log("Preparing directory structure")
+    rootdir, datadir, resourcesdir, processeddir = pd2tools.getPD2dirs(config)
 
-    rootdir, datadir, resourcesdir, dbdir = pd2tools.getPD2dirs(config)
+    os.makedirs(rootdir, exist_ok=exist_ok)
 
     if not os.path.exists(resourcesdir):
         seedBundledResources(resourcesdir)
 
-    if not os.path.exists(datadir):
-        os.makedirs(datadir)
-    
-    if not os.path.exists(dbdir):
-        os.makedirs(dbdir)
+    os.makedirs(datadir, exist_ok=True)
+    os.makedirs(processeddir, exist_ok=True)
+
+
+def runDirInit(config):
+    """Initialize a new build directory, failing if it already exists."""
+
+    pd2tools.log("Initializing build directory")
+
+    try:
+        _prepareDirectoryLayout(config, exist_ok=False)
+    except FileExistsError as error:
+        rootdir = pd2tools.getPD2dirs(config)[0]
+        raise FileExistsError(f"destination already exists: {rootdir}") from error
+
+
+def runDirPrep(config):
+    """Prepare the directory layout for an existing pipeline action."""
+
+    pd2tools.log("Preparing directory structure")
+    _prepareDirectoryLayout(config, exist_ok=True)
 
 
 def runDownloads(config):

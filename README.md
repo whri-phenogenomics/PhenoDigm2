@@ -78,6 +78,16 @@ python3 -m unittest pd2tests/*
 Building a phenodigm database consists of a setup stage and calculation
 stage. The procedure is explained in the [BUILD](BUILD.md) page.
 
+Initialize a new build directory, including its packaged resources, with:
+
+```
+phenodigm2 --init [BUNDLE_NAME]
+```
+
+For example, `phenodigm2 --init v21072026` creates a new `v21072026`
+directory. The command fails when the bundle name is omitted or the destination
+already exists.
+
 
 ### Status
 

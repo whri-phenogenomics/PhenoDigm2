@@ -12,20 +12,23 @@ The repo consists of the following important parts:
  
 ## Building a database
 
-Preparing the phenodigm database is a multi-step process. The preparation
-must be done manually; the other steps can be executed separately or
-through a single command.
+Preparing the phenodigm database is a multi-step process. The initialization
+step creates the build directory and copies in the packaged configuration
+resources; the remaining steps operate on that directory.
  
 
 #### Prep [~5 min]
 
-To build a new instance of a phenodigm database, you must first prepare 
-an output directory. This might be, for example `version-DATE`, where you
-can substitute DATE by the current date.
+To build a new instance, initialize an output directory such as
+`version-DATE`, where you can substitute DATE with the current date:
 
-Create such a directory, then copy the entire `resources` folder from the 
-repo into this directory. After this step, you would thus have `resources` 
-as a sub-directory of `version-DATE`.
+```
+phenodigm2 --init version-DATE
+```
+
+Initialization creates `resources`, `data_raw`, and `data_processed` under the
+new build directory. The bundle name is required, and initialization fails if
+that path already exists.
 
 If you would like to customize the build, you can edit appropriate files
 in the `resources` directory. For example, the paths for data downloads are 

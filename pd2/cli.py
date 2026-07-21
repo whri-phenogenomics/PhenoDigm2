@@ -122,10 +122,20 @@ def build_parser():
                         help="minimum raw phenodigm score",
                         default=2.2)
 
-    # determining what part of the calculation to perform
-    parser.add_argument(
+    # Initialization is a standalone mode, not a pipeline stage. Keeping it
+    # mutually exclusive with the positional action prevents an accidental
+    # download or build while a user is only preparing a directory.
+    action_group = parser.add_mutually_exclusive_group(required=True)
+    action_group.add_argument(
+        "--init",
+        action="store",
+        metavar="BUNDLE_NAME",
+        help="Create a new build directory and seed its bundled resources",
+    )
+    action_group.add_argument(
         "action",
         action="store",
+        nargs="?",
         help="Type of calculation/action to perform",
         choices=[
             "download",
@@ -152,7 +162,23 @@ def build_parser():
 def main(argv=None):
     """Parse arguments and run the requested PhenoDigm2 action."""
 
-    config = build_parser().parse_args(argv)
+    parser = build_parser()
+    config = parser.parse_args(argv)
+
+    if config.init is not None:
+        if config.db is not None:
+            parser.error(
+                "--db cannot be used with --init; pass the bundle path directly"
+            )
+        config.db = config.init
+        tools.log("Starting PhenoDigm2 [init]")
+        try:
+            prep.runDirInit(config)
+        except FileExistsError as error:
+            exit(f"Error initializing build directory: {error}")
+        tools.log("Done")
+        return
+
     try:
         config.dbfile = tools.getDBfile(config)
     except Exception:
