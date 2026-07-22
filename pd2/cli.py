@@ -171,8 +171,11 @@ def build_parser():
     parser.add_argument(
         "--solr_cores_dir",
         action="store",
-        help="directory holding localhost solr instance",
-        default="/tmp/phenodigm2/",
+        help=(
+            "directory holding localhost Solr cores "
+            "(default: <db>/output/solr/solrcores7.5)"
+        ),
+        default=None,
     )
     parser.add_argument(
         "--solr_corename",
@@ -220,6 +223,7 @@ def build_parser():
             "ontology_mapping",
             "score",
             "index",
+            "solr-prepare",
             "solr",
             "parquet",
             "query",
@@ -297,6 +301,8 @@ def main(argv=None):
         score.runScoring(config)
     if config.action == "index":
         dbbuild.runDBIndexing(config)
+    if config.action == "solr-prepare":
+        solr.prepareSolrBundle(config)
     if config.action == "solr":
         solr.runSolrCoreBuild(config)
     if config.action == "post-process":

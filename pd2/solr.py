@@ -4,8 +4,11 @@
 """
 
 import os.path
+from importlib.resources import as_file
+from pathlib import Path
+from shutil import copy2, copytree, rmtree
+
 import requests
-from shutil import rmtree, copytree
 
 from . import tools as pd2tools
 from . import solrdata
@@ -13,8 +16,48 @@ from . import solrlinks
 from . import solrsearch
 
 
+SOLR_OUTPUT_DIRECTORY = Path("output") / "solr"
+SOLR_COMPOSE_FILENAME = "dc-solr-7.5.yml"
+SOLR_CORES_DIRECTORY = "solrcores7.5"
+
+
 # ############################################################################
 #
+
+
+def prepareSolrBundle(config):
+    """Prepare the Compose file and core storage inside a build bundle.
+
+    Existing Compose files are preserved so release-specific edits are not
+    overwritten. A custom ``--solr_cores_dir`` remains supported; otherwise
+    the path matches the relative volume in the bundled Compose file.
+    """
+
+    bundle_dir = Path(config.db).expanduser().resolve()
+    output_dir = bundle_dir / SOLR_OUTPUT_DIRECTORY
+    compose_path = output_dir / SOLR_COMPOSE_FILENAME
+    default_cores_dir = output_dir / SOLR_CORES_DIRECTORY
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    if not compose_path.exists():
+        resources_dir = Path(pd2tools.getPD2dirs(config)[2])
+        release_source = resources_dir / SOLR_COMPOSE_FILENAME
+        if release_source.is_file():
+            copy2(release_source, compose_path)
+        else:
+            bundled_source = pd2tools.getBundledResourcesDir() / SOLR_COMPOSE_FILENAME
+            with as_file(bundled_source) as source_path:
+                copy2(source_path, compose_path)
+
+    configured_cores_dir = getattr(config, "solr_cores_dir", None)
+    if configured_cores_dir:
+        cores_dir = Path(configured_cores_dir).expanduser().resolve()
+    else:
+        cores_dir = default_cores_dir
+        config.solr_cores_dir = str(cores_dir)
+    cores_dir.mkdir(parents=True, exist_ok=True)
+
+    return output_dir, compose_path, cores_dir
 
 
 def initSolrCore(config):
@@ -66,11 +109,15 @@ def initSolrCore(config):
 def runSolrCoreBuild(config):
     """Create and fill a Solr core from a Phenodigm2 db."""
 
+    output_dir, compose_path, cores_dir = prepareSolrBundle(config)
+    pd2tools.log(f"Solr bundle directory: {output_dir}", 2)
+    pd2tools.log(f"Docker Compose file: {compose_path}", 2)
+    pd2tools.log(f"Solr cores directory: {cores_dir}", 2)
+
     pd2tools.log("Initializing solr core")
     init_ok, init_result = initSolrCore(config)
     if not init_ok:
-        pd2tools.log("Error: " + init_result, 2)
-        return
+        raise RuntimeError("Failed to create Solr core: " + init_result)
 
     pd2tools.log("Transferring data to solr core")
     solrlinks.runSolrGeneGene(config)
