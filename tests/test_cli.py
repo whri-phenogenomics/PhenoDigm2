@@ -10,7 +10,6 @@ def assert_initialized(build_dir):
 
     assert build_dir.is_dir()
     assert (build_dir / "resources" / "dependencies.json").is_file()
-    assert (build_dir / "resources" / "catalog.xml").is_file()
     assert (build_dir / "data_raw").is_dir()
     assert (build_dir / "data_processed").is_dir()
 

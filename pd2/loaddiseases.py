@@ -185,7 +185,7 @@ def checkDiseaseIndex(did):
 
 
 def loadDiseasePhenotypeData(dbfile, annodir, headersdir, dbdir):
-    """Fill table with disease-hp associations."""
+    """Fill disease-HP associations and write legacy annotation files."""
 
     file_pheno = join(annodir, "phenotype.hpoa")
     header_pheno = join(headersdir, "phenotype_annotation.header")
@@ -222,8 +222,8 @@ def loadDiseasePhenotypeData(dbfile, annodir, headersdir, dbdir):
         disease_phenotype_data.addData(nowd, nowhps)
     disease_phenotype_data.save()
 
-    # This block (until end of function) produces text files
-    # Those text files are eventually used by owltools
+    # Retain the former Owltools inputs as legacy build artifacts. Producing
+    # these files depends only on phenotype.hpoa, not on Owltools resources.
     out_diseases = join(dbdir, "Hs-disease-labels.txt")
     with open(out_diseases, "w") as f:
         for nowd in sorted(disease_phenotypes.keys()):

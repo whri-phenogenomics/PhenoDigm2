@@ -10,9 +10,6 @@ import pd2.prep as pd2prep
 from pd2.prep import fetchFromURL, fetchUsingXmlQuery, runDirPrep, runDownloads
 import gzip
 import json
-from xml.etree.ElementTree import Element, SubElement, tostring
-from xml.dom import minidom
-import shutil
 
 
 # Test for fetchFromURL function
@@ -138,7 +135,7 @@ def test_run_dir_prep_seeds_missing_resources_dir(mock_pd2dirs):
     # The resources dir is created and populated from the packaged bundle
     assert resourcesdir.exists()
     assert (resourcesdir / "db_schema.json").exists()
-    assert (resourcesdir / "catalog.xml").exists()
+    assert (resourcesdir / "dependencies.json").exists()
     assert (resourcesdir / "annotations").is_dir()
 
     # datadir and dbdir are still created as before
@@ -149,14 +146,13 @@ def test_run_dir_prep_seeds_missing_resources_dir(mock_pd2dirs):
 # Test runDownloads
 
 
-# Fixture to mock `dependencies.json` and `catalog.xml`
+# Fixture to mock `dependencies.json`
 @pytest.fixture
 def mock_run_downloads_dependencies(monkeypatch, mock_pd2dirs):
-    """Fixture to write mock `dependecies.json` and `catalog.xml` files.
+    """Fixture to write a mock `dependencies.json` file.
 
     The fixture takes mock directories from the `mock_pd2dirs` fixture,
-    writes the `dependencies.json` and `catalog.xml` files, monkeypatches
-    the functions used within `runDownloads` to isolate their behaviour and
+    writes `dependencies.json`, monkeypatches the download functions, and
     returns the necessary directories.
 
     Returns: The 4 directories from mock_pd2dirs with necessary download files.
@@ -196,17 +192,6 @@ def mock_run_downloads_dependencies(monkeypatch, mock_pd2dirs):
     # runDownloads does this automatically, the test does not.
     (datadir / dependencies["id"]["targetdir"]).mkdir()
 
-    # Create a mock catalog.xml
-    root = Element("root")
-    uri_element = SubElement(root, "uri")
-    uri_element.set("name", "fake_test_url")
-    uri_element.set("uri", "test_catalog_file")
-
-    # Write mock catalog file to resourcedir
-    catalog_file = resourcesdir / "catalog.xml"
-    with open(catalog_file, "w") as f:
-        f.write(minidom.parseString(tostring(root)).toprettyxml(indent="\t"))
-
     # Monkeypatch the functions in runDownloads
 
     # Monkeypatch fetchUsingXmlQuery to write a simplified file
@@ -223,15 +208,6 @@ def mock_run_downloads_dependencies(monkeypatch, mock_pd2dirs):
 
     monkeypatch.setattr(pd2prep, "fetchFromURL", mock_fetchFromURL)
 
-    # Monkeypatch shutil.copy to move and write the necessary files.
-    def mock_shutil_copy(src, dst):
-        filename = src.split("/")[-1]
-        if filename in ["hp-importer.owl", "mp-importer.owl", "catalog.xml"]:
-            with open(datadir / filename, "w") as f:
-                f.write("Mock file")
-
-    monkeypatch.setattr(shutil, "copy", mock_shutil_copy)
-
     return rootdir, datadir, resourcesdir, dbdir
 
 
@@ -246,11 +222,3 @@ def test_run_downloads(mock_run_downloads_dependencies, mock_pd2dirs):
 
     # Assert the file from dependencies.json exists in correct dir
     assert (datadir / "mock_annotations" / "test_file.xml").exists()
-
-    # Asser the file from catalog.xml exists
-    assert (datadir / "test_catalog_file").exists()
-
-    # Assert importers and catalog exist in the correct directory
-    assert (datadir / "hp-importer.owl").exists()
-    assert (datadir / "mp-importer.owl").exists()
-    assert (datadir / "catalog.xml").exists()

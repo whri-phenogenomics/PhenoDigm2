@@ -100,11 +100,11 @@ class PhenodigmQuery:
         sql = "SELECT id, term FROM disease WHERE id=?"
         self.queryUsingSelect(sql, self.diseases, "disease", "id\tterm")
 
-    def queryOwltoolsScores(self):
-        """Display owltools scores for pairs of terms."""
+    def queryOntologyMappingScores(self):
+        """Display ontology-mapping scores for pairs of terms."""
 
         if self.verbose:
-            pd2tools.log("Phenodigm query [owltools]")
+            pd2tools.log("Phenodigm query [ontology mapping]")
 
         columns = ["query", "match", "simJ", "ic", "lcs"]
         sql = "SELECT " + ", ".join(columns) + " FROM "
@@ -232,7 +232,7 @@ def queryPhenodigm(config):
     pe = PhenodigmQuery(config)
 
     if config.sim:
-        pe.queryOwltoolsScores()
+        pe.queryOntologyMappingScores()
     elif config.phenotype:
         pe.queryDiseasePhenotypes()
         pe.queryModelPhenotypes()

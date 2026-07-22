@@ -1,6 +1,6 @@
 """Final phase of PhenoDigm2 db build. Generates scores from phenotypes.
 
-Uses owltools-cache files to produce phenodigm scores.
+Uses ontology-ontology mappings to produce phenodigm scores.
 
 @author: Tomasz Konopka
 """

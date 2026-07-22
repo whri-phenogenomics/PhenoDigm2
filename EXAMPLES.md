@@ -81,7 +81,7 @@ it is not possible to query models and disease at once.
 
 ### How similar are phenotypes terms?
 
-This question is about owltools similarity scores.
+This question is about Phenio/Semsimian ontology-mapping scores.
 
 ```
 ... --sim --term "HP:0009695 HP:0025332"
@@ -91,8 +91,8 @@ Note the presence of an option `--score` in addition to
 the list of phenotype terms.
 
 The output to this command consists of a table for a symmetric matrix.
-The scores are computed by owltools, not phenodigm; they
-form the raw inputs for phenodigm calculations (see below). 
+The scores are loaded from the Phenio/Semsimian mappings; they form the raw
+inputs for phenodigm calculations (see below).
 
 
 ### How similar are a model and a disease?

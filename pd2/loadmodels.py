@@ -11,7 +11,8 @@ from os.path import join as join
 from . import tools as pd2tools
 from . import dbmodels as pd2models
 from . import dss as pd2dss
-from .dbextractors import *
+# Legacy dependency for the commented database snapshots below:
+# from .dbextractors import getDbMapSets
 
 # shortcuts
 readHeader = pd2tools.readHeader
@@ -244,12 +245,14 @@ def isIMPC(s):
 
 
 def loadMGIMouseModelData(db_file, anno_dir, headers_dir, db_dir):
-    """Fill table with mouse model-phenotype associations."""
+    """Fill mouse model-phenotype associations and write legacy files."""
 
-    # get information about IMPC models (genotypes and phenotypes)
-    modelgenes = getDbMapSets(pd2models.ModelModelGenotype(db_file))
-    modelphen = pd2models.ModelIdPhenotype(db_file)
-    modelphenotypes = getDbMapSets(pd2models.ModelModelPhenotype(db_file))
+    # Legacy Owltools-era database snapshots. The values were not consumed by
+    # this function, so retain the statements for reference without executing
+    # their full-table database reads.
+    # modelgenes = getDbMapSets(pd2models.ModelModelGenotype(db_file))
+    # modelphen = pd2models.ModelIdPhenotype(db_file)
+    # modelphenotypes = getDbMapSets(pd2models.ModelModelPhenotype(db_file))
 
     file_pheno = join(anno_dir, "MGI_GenePheno.rpt.gz")
     header_pheno = join(headers_dir, "MGI_GenePheno.header")
@@ -310,9 +313,9 @@ def loadMGIMouseModelData(db_file, anno_dir, headers_dir, db_dir):
             # record the phenotype
             models[modelid].addMP(fields[phenoindex])
 
-            # JAX files can have multiple genes associated
-            # with the phenotypes (mouse with more than one aberration)
-            # ignore those items
+            # The legacy gene profile represents only unambiguous single-gene
+            # annotations. JAX rows can associate a phenotype with multiple
+            # genes; retain the historical behavior of omitting those rows.
             if len(nowindex.split(",")) > 1:
                 continue
             if len(nowindex.split("|")) > 1:
@@ -325,14 +328,14 @@ def loadMGIMouseModelData(db_file, anno_dir, headers_dir, db_dir):
     # transfer into db
     saveMouseModels(db_file, models)
 
-    # output gene phenotypes
+    # Retain the former Owltools inputs as legacy build artifacts. Producing
+    # them depends only on the JAX/MGI annotation downloads and header files.
     out_phenotypes = join(db_dir, "Mm-gene-to-phenotype-O.txt")
     with open(out_phenotypes, "w") as f:
         for nowg in sorted(gene_phenotypes.keys()):
             for hh in gene_phenotypes[nowg].phenotypes:
                 f.write(str(nowg) + "\t" + hh + "\n")
 
-    # Scan for gene titles
     file_genes = join(anno_dir, "MGI_EntrezGene.rpt.gz")
     header_genes = join(headers_dir, "MGI_EntrezGene.header")
 

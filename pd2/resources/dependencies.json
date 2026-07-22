@@ -3,7 +3,7 @@
     "comment": "Ontologies", 
   	"url": "http://purl.obolibrary.org/obo/",
   	"targetdir": "obo",
-  	"filename": ["hp.obo", "mp.obo", "doid.obo"]	  	
+  	"filename": ["hp.obo", "mp.obo"]	  	
    },
    "semsimian": {
     "comment": "Phenio semantic similarity files",

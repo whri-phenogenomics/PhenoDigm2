@@ -13,7 +13,6 @@ from . import load
 from . import dbbuild
 from . import export
 from . import ontology_mapping
-from . import owl
 from . import parquet as parquet_export
 from . import prep
 from . import query
@@ -148,26 +147,6 @@ def build_parser():
         default=False,
     )
 
-    # running owltools to obtain ontology term-term similarities
-    parser.add_argument(
-        "--owltools",
-        action="store",
-        help="complete command to run owltools",
-        default="owltools",
-    )
-    parser.add_argument(
-        "--owltools_mem",
-        action="store",
-        help="heap size allocation for owltools",
-        default="26G",
-    )
-    parser.add_argument(
-        "--owltools_min_ic",
-        action="store",
-        help="minimal ic for owltools output",
-        default=2.5,
-    )
-
     # processing Phenio mappings to obtain ontology term-term similarities
     parser.add_argument(
         "--ontology_mapping",
@@ -238,7 +217,6 @@ def build_parser():
         choices=[
             "download",
             "build",
-            "owltools",
             "ontology_mapping",
             "score",
             "index",
@@ -313,9 +291,6 @@ def main(argv=None):
     if config.action == "build":
         dbbuild.runDBBuild(config)
         load.runLoad(config)
-    if config.action == "owltools":
-        # owl.runOwltools(config)
-        owl.loadOwlCacheFiles(config)
     if config.action == "ontology_mapping":
         ontology_mapping.run_ontology_mapping_processing(config)
     if config.action == "score":
