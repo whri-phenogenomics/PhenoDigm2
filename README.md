@@ -1,110 +1,90 @@
 # PhenoDigm2
 
-The PhenoDigm2 software serves two purposes. 
-
- - It provides an implementation for [phenodigm scoring](https://academic.oup.com/database/article/333089). 
- This scoring technique uses phenotype annotations to assess similarities
- between animal models and diseases. 
-
- - It creates a database with phenotype annotations and 
- precomputed phenodigm scores. This database can be distributed
- following the licence conditions [explain].
-
-
+PhenoDigm2 builds phenotype annotation databases and computes PhenoDigm scores
+that compare animal models with diseases. A completed build can be distributed
+as SQLite data and as a Parquet document bundle for the PhenoDigm Solr index.
 
 ## Installation
 
-### Hardware prerequisites
+PhenoDigm2 is a Python package built with
+[`uv`](https://docs.astral.sh/uv/) and requires Python 3.12 or later.
 
-PhenoDigm2 requires around 15 GB of disk space to store raw and 
-processed data (more if computing scores between models and between diseases).
-
-The database creation requires a minimum 28 GB of RAM for the `owltools` 
-phase, and about 4 GB per core for the `score` phase (see below).
-
-
-### Software prerequisites
-
-PhenoDigm2 requires `python3` (v. 3.11) and packages `sqlite3` and `requests`. Installation
-of the python framework and dependent packages is covered in several web resources.
-For the present application, you should be able to execute `python3` from the command line
-and obtain the interactive python prompt.
-
-Within the python prompt, you should be able to execute `import sqlite3` and `import requests`
-without errror.
-
-PhenoDigm2 also requires [`owltools`](https://github.com/owlcollab/owltools) (release 0.3.0). 
-Its installation procedure is covered in the owltools github repo README. Once set up, you
-should be able to execute `owltools -h` from the command line and observe the 
-help menu.
-
-
-### Local setup
-
-To set up PhenoDigm2 on a local computer, fetch the code from the github repo.
-
-```
+```bash
 git clone [REPO_URL]
+cd PhenoDigm2
+uv sync
+uv run phenodigm --help
 ```
 
-The repo should have a file `phenodigm2.py` in the root directory. 
-This is the main program file and running this with `-h` switch should display 
-a summary of the command line interface. 
+`phenodigm` is the supported command-line entry point. The legacy
+`python3 phenodigm2.py ...` form is no longer used in the main documentation.
 
-```
-python3 phenodigm2.py -h
-```
+Owltools is no longer supported. Current builds use downloaded
+Phenio/Semsimian mappings through the `ontology_mapping` action.
 
+## Build overview
 
-### Setup in Apocrita
-PhenoDigm2 runs in Apocrita using `python3` (v 3.6).
+Use a release-specific directory such as `vTODAY`:
 
-Since May 2023, a parsing error appeared after running `python3 code/PhenoDigm2/phenodigm.py build...`. The working code for python3.6 can be found as a tag through `git checkout python3.6`.
+```bash
+uv run phenodigm --init vTODAY
 
+# Check the latest version-specific Phenio/Semsimian Zenodo record first.
+uvx zenodo_get -w - 18474575
+# Update the record ID in vTODAY/resources/dependencies.json.
 
-### Testing
-
-A limited number of unittests are available under the `pd2tests` folder. 
-
-```
-python3 -m unittest pd2tests/*
-```
-
-
-## Usage
-
-### Build
-
-Building a phenodigm database consists of a setup stage and calculation
-stage. The procedure is explained in the [BUILD](BUILD.md) page.
-
-Initialize a new build directory, including its packaged resources, with:
-
-```
-phenodigm2 --init [BUNDLE_NAME]
+uv run phenodigm download --db vTODAY
+uv run phenodigm build --db vTODAY
+uv run phenodigm ontology_mapping --db vTODAY
+uv run phenodigm score --fast --db vTODAY
+uv run phenodigm index --db vTODAY
+uv run phenodigm parquet --db vTODAY
 ```
 
-For example, `phenodigm2 --init v21072026` creates a new `v21072026`
-directory. The command fails when the bundle name is omitted or the destination
-already exists.
+The Parquet action creates `vTODAY/output/parquet` with the document types
+required by EBI to build the PhenoDigm Solr index. A local Solr core remains an
+optional compatibility workflow.
 
+See the following guides for complete instructions:
 
-### Status
+- [BUILD.md](BUILD.md) — package setup and the complete build sequence.
+- [IMPC_RELEASE.md](IMPC_RELEASE.md) — IMPC release checklist and validation.
+- [PARQUET.md](PARQUET.md) — Parquet schemas and bundle layout.
+- [SOLR.md](SOLR.md) — optional local Solr configuration.
+- [EXAMPLES.md](EXAMPLES.md) — database query and export examples.
 
-After a successful database build, you can browse the resuling database
-with any sqlite client (e.g. in R, in a browser, etc.). The `phenodigm2.py` 
-executable also provides a simple utility to view the status of the 
-database from the command line. 
+## Useful commands
 
+Inspect a completed database:
+
+```bash
+uv run phenodigm status --db vTODAY
 ```
-python3 phenodigm2.py status --db [PATH]
+
+Use a non-default ontology-mapping IC threshold:
+
+```bash
+uv run phenodigm ontology_mapping \
+  --ontology_mapping_min_ic <IC> \
+  --db vTODAY
 ```
 
+Prepare and build an optional local Solr core:
 
-### Examples
+```bash
+uv run phenodigm solr-prepare --db vTODAY
+docker compose -f vTODAY/output/solr/dc-solr-7.5.yml up -d
+uv run phenodigm solr \
+  --solr_url http://localhost:8984/solr/ \
+  --db vTODAY
+docker compose -f vTODAY/output/solr/dc-solr-7.5.yml down
+```
 
-There are also some utilities to query the database; this can be
-useful during manual inspections and to export data to other formats.
+`solr-prepare` is idempotent and removes the previous manual Compose-file copy.
+See [SOLR.md](SOLR.md) for lifecycle and customization details.
 
-These utilities are explained in the [EXAMPLES.md](EXAMPLES.md) document.
+Run the test suite:
 
+```bash
+uv run pytest
+```

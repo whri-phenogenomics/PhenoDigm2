@@ -1,269 +1,236 @@
-# Procedure for IMPC release
+# Procedure for an IMPC release
 
-This document describes how to use the `phenodigm2` program to support an IMPC data release. 
+This document is the operational checklist for producing PhenoDigm2 data for an
+IMPC release.
 
-Some related documents:
+Related documentation:
 
-- `BUILD.md` - describes the general procedure for how to build a phenodigm2 database.
-- `SOLR.md` - describes how to create a solr core
-
-
+- [BUILD.md](BUILD.md) explains each database-build stage.
+- [PARQUET.md](PARQUET.md) describes the EBI Parquet bundle and its schemas.
+- [SOLR.md](SOLR.md) describes optional local Solr configuration.
 
 ## Prerequisites
 
-### File locations
+### Package environment
 
-These instructions assume:
+PhenoDigm2 is a Python package built with `uv` and requires Python 3.12 or
+later. From the repository root, synchronize the environment and verify the
+installed command:
 
-- that the `PhenoDigm2` repository is available at a location `/code/PhenoDigm2/`. 
-- data files will be stored at a location `/data/PhenoDigm2/`.
-
-
-
-### Owltools
-
-Owltools is a java program for computing similarities between ontology terms. It is required during the database build stage. A compiled copy is available on apocrita at `/data/WHRI-Phenogenomics/software/opt/owltools`. 
-
-Make sure you load a compatible OpenJDK version. As of DR23 on Apocrita: `openjdk/1.8.0_265-b01-gcc-12.2.0` works.
-
-Test that owltools is available and working. 
-
-```
-/path/to/owltools/owltools --help
+```bash
+uv sync
+uv run phenodigm --help
 ```
 
-(This should display a long list of command-line arguments.)
+The examples below assume the repository root is the current directory and use
+`vTODAY` as the release directory. Replace `vTODAY` with the real release name
+or an absolute output path as appropriate.
 
+Owltools is no longer supported, and its legacy CLI action has been removed.
+Do not run the old Protege/Robot conversion procedure. The current workflow obtains ontology
+mappings from Phenio/Semsimian data and loads them with `ontology_mapping`.
 
-### Protege or Robot
+### OMIM credentials
 
-[Protege](https://protege.stanford.edu/) is a java program and GUI for viewing ontology files. It is required for a manual step during the database build stage.
+The OMIM inputs require a valid API key. Export it before the download step:
 
-[Robot](http://robot.obolibrary.org) is a tool for working with OBO. This is availble to use in Apocrita through Apptainer(Singularity). **This is the prefered option**.
-
-
-### Python environment
-
-The `phenodigm2` program runs using python (tested with versions 3.6, 3.7, and 3.8). 
-
-Set up a new python environment (here called `venv`), activate it, and install required packages. At the end, deactivate the environment. 
-
-```
-cd /data/PhenoDigm2/
-python3 -m venv venv
-source venv/bin/activate
-python3 -m pip install --upgrade pip
-python3 -m pip install -r /code/PhenoDigm2/requirements.txt
-# test that phenodigm2 program works
-python3 /code/PhenoDigm2/phenodigm2.py --help
-deactivate
-```
-
-(The help command should display a summary of command-line arguments.)
-
-
-### Solr server
-
-A solr server is required to store data in the format required for the IMPC website. It is important that the version of the solr server matches that used by the IMPC. The easiest way to achieve this is using docker.
-
-Launch a solr server using `docker-compose` and the provided compose configuration. Test that it responds to queries. When done, stop the solr server.
-
-```
-cd /data/PhenoDigm2/
-cp /code/PhenoDigm2/dc-solr-7.5.yml .
-docker-compose -f dc-solr-7.5.yml up -d
-curl http://localhost:8984/solr/
-docker-compose -f dc-solr-7.5.yml down
-```
-
-(The curl command should display text that looks like html. Alternatively, 
-navigate to that address in a browser; the browser should display the solr dashboard.)
-
-
-## Building a database
-
-To begin a database build, create a new directory 
-
-```
-cd /data/PhenoDigm2/
-# create new directory - replace TODAY by a version identifier, e.g. a date 
-mkdir vTODAY
-```
-
-Activate the python environment. Then download all the required raw data (IMPC, MGI, obofoundry, HGNC, Ensemble, OMIM, ORPHANET).
-
-Before each **download** run, retrieve the latest file URLs for the Semsimian Zenodo
-concept record:
-
-```
-uvx zenodo_get -w "zenodo_urls" 18474575
-```
-
-Inspect `zenodo_urls` to find the latest version-specific record ID, then update
-the Semsimian Zenodo URL in `pd2/resources/dependencies.json` with that
-record ID.
-
-**NOTE**: To download OMIM data we require an OMIM API key. This can be passed as a local global variable: `OMIM_API_KEY`. If no key/invalid key is passed, morbidmap and mimTitle and  will contain an error. 
-```
-cd /data/PhenoDigm2/
-source venv/bin/activate
+```bash
 export OMIM_API_KEY="<your_key_here>"
-python3 /code/PhenoDigm2/phenodigm2.py download --db vTODAY
 ```
 
-The download can take a few minutes. When complete, manually check that the files in the `raw_data` subdirectory contain the expected data. Note that some ontology-related files will be empty or show error messages. This is unfortunate, but normal. The most useful strategy to check the downloads is to compare file sizes against a previous release.
+Without a valid key, the downloaded OMIM files may contain an error response
+instead of release data.
 
-The resources directory should have been copied into vTODAY. 
+## Build the release
 
-**NOTE**: Check `data_raw/annotations/human_mouse_mapping.txt.gz` and decide if you want the version from the previous release or the temporary solution. This happends because the current Ensembl query to produce such file is broken at present. 
+### 1. Initialize
 
-After the download, manual intervention is required on two files.
-
-**Option 1: Robot**(recommended)
-- Find file `data_raw/obo/hp.obo` and save contents in owl format to replace `data_raw/obo/hp/hp-edit.owl` using the following command in Apocrita:
-  
-  - ```apptainer run docker://obolibrary/robot robot convert --input data_raw/obo/hp.obo --output data_raw/obo/hp/hp-edit.owl ```
-
-- Find file `data_raw/obo/mp.obo` and save contents in owl format to replace `data_raw/obo/mp/mp-edit.owl` using the following command in Apocrita:
-  
-  - ```apptainer run docker://obolibrary/robot robot convert --input data_raw/obo/mp.obo --output data_raw/obo/mp/mp-edit.owl ```
-
-**Option 2: Protege**
-- Find file `data_raw/obo/hp.obo` and open it in Protege. Save the contents
-  in owl format to replace `data_raw/obo/hp/hp-edit.owl`.
-- Find file `data_raw/obo/mp.obo` and open it in Protege. Save the contents in owl format to replace `data_raw/obo/mp/mp-edit.owl`.
-
-After this adjustment, the rest of the pipeline should run without
-the need for further intervention. (It is straightforward to put the next few steps into a single script, but keeping them separate creates breakpoints to check files manually, if desired.)
-
-```
-# build a database with a subset of tables (~2 mins)
-python3 /code/PhenoDigm2/phenodigm2.py build --db vTODAY
-# compute HP-MP similarities (~24 hours)
-python3 /code/PhenoDigm2/phenodigm2.py owltools --db vTODAY \
-                           -owltools /path/to/owltools/owltools
-# score associations between diseases and models (~24 hours)
-python3 /code/PhenoDigm2/phenodigm2.py score --fast --db vTODAY
-# create indexes on database table (~10 min)
-python3 /code/PhenoDigm2/phenodigm2.py index --db vTODAY
-# optional - print a summary of the database tables (~1 min)
-python3 /code/PhenoDigm2/phenodigm2.py status --db vTODAY
-``` 
-
-The **owltools** step runs in single-core mode and requires a lot of memory. The default allocation is 26G; lower values will likely fail. Use the command-line argument `--owltools_mem` to change the allocation.
-
-The **score** steps runs in multi-core mode. The default is to use 4 cores. Use argument `--cores` to change this as needed. Each core will require around 4GB of memory.
-
-Note that in the **score** step uses the flag **--fast**. This limits the calculations to associations between diseases and models. If the flag is omitted, the step also calculates associations between pairs of models and pairs of diseases, taking a lot more time and disk space.
-
-Once complete, the database is ready-to-use, copy, transfer, archive. The primary output of the pipeline - the database - is a single file with extension `sqlite`. However, archives on apocrita contain the full set of files.
-
-
-## Building a solr core
-
-Once a local database is complete, the `phenodigm2` software can transfer the data into a solr core.
-
-An important point when preparing a solr core for an IMPC data release is that the IMPC requires a core named 'phenodigm' irrespective of the release number. When creating a new core, it is necessary to ensure that a core with that name does not already exist. There are two strategies to ensure this. 
-
-One strategy relies on resetting the solr server. To start from scratch, make sure the solr server is not running (i.e. it is down), delete the folder with the core data, and restart the server. 
-
-```
-cd /data/PhenoDigm2/
-docker-compose -f dc-solr-7.5.yml down
-rm -fr solrcores7.5
-docker-compose -f dc-solr-7.5.yml up -d
+```bash
+uv run phenodigm --init vTODAY
 ```
 
-An alternative strategy is to find an existing core named 'phenodigm' and change its name. To do this, make sure the solr server is not running (i.e. it is down), navigate into the folder with the core data, edit file 'core.properties' to assign a new name to the existing core, and restart the server.
+This creates the release directory and seeds `vTODAY/resources` from the
+package. Do not create `vTODAY` manually; initialization deliberately fails if
+the destination already exists.
 
-To proceed, start the solr server and check that a core named 'phenodigm' does not exist. 
+### 2. Update the Phenio Zenodo record
 
+Before downloading, resolve the Semsimian concept record to the latest
+version-specific record:
+
+```bash
+uvx zenodo_get -w - 18474575
 ```
-cd /data/PhenoDigm2/
-docker-compose -f dc-solr-7.5.yml up -d
+
+The output contains direct URLs for the current files. Copy the numeric ID after
+`/records/` and replace the Semsimian record ID in:
+
+```text
+vTODAY/resources/dependencies.json
+```
+
+The equivalent command that preserves the URL list in a file is:
+
+```bash
+uvx zenodo_get -w zenodo_urls 18474575
+```
+
+Review all entries in the release copy of `dependencies.json` before the
+download. Updating the source file under `pd2/resources` is unnecessary for a
+one-off release and would not change an already initialized bundle.
+
+### 3. Download and validate resources
+
+```bash
+uv run phenodigm download --db vTODAY
+```
+
+Validate the resulting files under `vTODAY/data_raw`. Compare their sizes and
+basic contents with the previous IMPC release, paying particular attention to:
+
+- the Phenio/Semsimian archives;
+- OMIM files, which should contain data rather than an API error;
+- `data_raw/annotations/human_mouse_mapping.txt.gz`; and
+- the main IMPC, MGI, HGNC, Ensembl, Orphanet, and ontology inputs.
+
+### 4. Build the database
+
+```bash
+uv run phenodigm build --db vTODAY
+```
+
+The current implementation still requires this explicit action to create and
+populate the SQLite tables before ontology mappings and scores can be loaded.
+
+### 5. Load Phenio ontology mappings
+
+```bash
+uv run phenodigm ontology_mapping --db vTODAY
+```
+
+If the release requires a different information-content threshold:
+
+```bash
+uv run phenodigm ontology_mapping \
+  --ontology_mapping_min_ic <IC> \
+  --db vTODAY
+```
+
+### 6. Score disease-model associations
+
+```bash
+uv run phenodigm score --fast --db vTODAY
+```
+
+The score stage uses four cores by default. Select another count with
+`--cores <N>`. Keep `--fast` for the standard release workflow; omitting it also
+calculates disease-disease and model-model scores.
+
+### 7. Create database indexes
+
+```bash
+uv run phenodigm index --db vTODAY
+```
+
+Optionally inspect the completed database:
+
+```bash
+uv run phenodigm status --db vTODAY
+```
+
+### 8. Write the EBI Parquet bundle
+
+```bash
+uv run phenodigm parquet --db vTODAY
+```
+
+The release bundle is written to `vTODAY/output/parquet`. It contains the nine
+document types and manifest needed by EBI to build the PhenoDigm Solr index.
+See [PARQUET.md](PARQUET.md) for the exact layout and validation details.
+
+If the target already exists after a failed or repeated release run, inspect it
+before choosing whether to rerun with `--overwrite`.
+
+Once these steps complete, retain the SQLite database, Parquet bundle, release
+resources, and logs together in the release archive.
+
+## Optional: build a local Solr core
+
+Parquet is the standard hand-off for EBI, but a local Solr core can still be
+built for compatibility testing. The Solr version must match the target
+environment. The existing Docker Compose setup uses Solr 7.5.
+
+Prepare the Compose file and its matching core volume inside the release
+bundle:
+
+```bash
+uv run phenodigm solr-prepare --db vTODAY
+```
+
+This idempotent action creates:
+
+```text
+vTODAY/output/solr/
+├── dc-solr-7.5.yml
+└── solrcores7.5/
+```
+
+No manual copy from the repository root is required, including for an older
+release bundle. An existing Compose file is preserved. The preparation action
+does not start Docker or contact Solr. Start the server explicitly and confirm
+that the `phenodigm` core does not already exist:
+
+```bash
+docker compose -f vTODAY/output/solr/dc-solr-7.5.yml up -d
 curl 'localhost:8984/solr/phenodigm/select?q=*:*'
 ```
 
-(This should report that the core does not exist.)
+To reset an existing local test server, stop it, remove its core directory only
+after confirming the path, and restart it. Alternatively, rename the existing
+core in `core.properties` before starting Solr.
 
-Transfer data from a local database to a solr core.
+Create and populate the core with the package entry point:
 
-```
-cd /data/PhenoDigm2/
-# create a new solr core (~30 mins)
-python3 /code/PhenoDigm2/phenodigm2 solr \
-  --solr_cores_dir /data/PhenoDigm2/solrcores7.5/ \
+```bash
+uv run phenodigm solr \
   --solr_url http://localhost:8984/solr/ \
   --db vTODAY
 ```
 
-(The process may emit warnings about invalid identifiers. Messages about MPATH can be ignored; they are ids that exist in the database but do not participate in phenotype scoring.)
+Without `--solr_cores_dir`, the package writes to the same
+`vTODAY/output/solr/solrcores7.5` directory mounted by the bundled Compose file.
+The default core name is `phenodigm`. See [SOLR.md](SOLR.md) for all relevant
+options. Validate the generated document types, for example:
 
-Once the data is transfered into solr, check that it is accessible. Some example queries are below.
-
-```
+```bash
 curl 'localhost:8984/solr/phenodigm/select?q=*:*&rows=0&facet=true&facet.field=type'
-curl 'localhost:8984/solr/phenodigm/select?q=*:*&rows=2'
 curl 'localhost:8984/solr/phenodigm/select?q=type:gene&rows=2'
 curl 'localhost:8984/solr/phenodigm/select?q=type:gene_gene&rows=2'
 curl 'localhost:8984/solr/phenodigm/select?q=type:ontology&rows=2'
 curl 'localhost:8984/solr/phenodigm/select?q=type:disease_gene_summary&rows=2'
 curl 'localhost:8984/solr/phenodigm/select?q=type:disease_model_summary&rows=2'
 curl 'localhost:8984/solr/phenodigm/select?q=type:disease_search&rows=2'
-curl 'localhost:8984/solr/phenodigm/select?q=type:disease_model_summary%20AND%20marker_id:"MGI:1919819"&rows=1'
 ```
 
-(Each query should return json documents with data.)
+Stop the server before archiving or transferring its core files:
 
-As the queries execute, the solr server takes internal steps to optimize how the data is stored. The optimizations takes place in the background and are useful because they reduce the size of the final data bundle (see below). To help the optimizations run, execute a few more queries, restart the server a few times, wait a few minutes, run a few more queries. 
-
-Finally, stop the solr server and prepare a zip bundle. 
-
-```
-docker-compose -f dc-solr-7.5.yml down
-cd solrcores7.5
-zip -r phenodigm_vTODAY.zip phenodigm_vTODAY
+```bash
+docker compose -f vTODAY/output/solr/dc-solr-7.5.yml down
 ```
 
-The resulting zip file is ready to transfer to IMPC.
+## Optional: post-processing analysis
 
-## Release end notes
+The `post-process` Luigi workflow produces outputs for the disease models
+portal and PheVal benchmarking. It requires at least one core with 32 GB RAM and
+a compatible R environment.
 
-In spring 2021, the IMPC team decided to update how disease-model associations are displayed on the data portal. The new proposal requires displaying information about 'matching phenotypes'. These fields are now part of the main solr core.
+The OMIM curation file and bundled R scripts are copied into the release at run
+time, so a standard run needs no extra configuration. To override a bundled
+input, copy `post_process_config.yaml` into `vTODAY`, edit the relevant path,
+then run:
 
-## Post processing analysis pipeline
-In 2023, the [disease models portal](https://diseasemodels.research.its.qmul.ac.uk) was published and in 2024 the pheval benchmarking was completed. To feed these resources, the pipeline was extended and was called `post-process` using [luigi](https://luigi.readthedocs.io/en/stable/running_luigi.html). This pipeline produces the files needed for these resources. 
-
-To execute the pipeline you need at least 1 core of 32GB of RAM:
-
-The three post-processing inputs — the OMIM curation file (`omim_curation.tsv`)
-and the two R scripts (`DR_22_Update_DM_pipeline.R`, `hgnc_symbol_checker.R`) —
-now ship inside the package (`pd2/resources`, `pd2/rscripts`) and are used by
-default. They are copied into the `--db` bundle at run time, so you can edit the
-copies there without touching the install. **No config is required for a
-standard run.**
-
-To override a bundled input with an external file (e.g. a freshly curated OMIM
-file, or a locally edited script for a different R version), copy the config
-into the db directory and uncomment the relevant entry:
-```
-cp -r /code/PhenoDigm2/post_process_config.yaml vTODAY/
-```
-```
-post_process_config.yaml
-
-# omim_curation_path: "/path/to/omim_curation.tsv"
-# main_r_script_path: "/path/to/DR_22_Update_DM_pipeline.R"
-# hgnc_symbol_checker_script_path: "/path/to/hgnc_symbol_checker.R"
-```
-
-3. Load a version of R and run the pipeline
-
-    **Note**: Since Apocrita's OS upgrade to Rocky, we must pass a path to store a local R library for installing packages. One has beeen made available in WHRI-Phenogenomics.
-
-   If you are using an R version different from the one below, a new directory must be created with the new version as its name. The main R script must be modified too.
-```
+```bash
 module load R/4.4.1
 export R_LIBS_USER=/data/WHRI-Phenogenomics/projects/PhenoDigm2/post_processing_dependencies/r_lib_paths/R/x86_64-pc-linux-gnu-library/4.4.1
-python3 /code/PhenoDigm2/phenodigm2.py post-process --db vTODAY
+uv run phenodigm post-process --db vTODAY
 ```

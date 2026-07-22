@@ -1,130 +1,171 @@
 # Building a PhenoDigm2 database
 
-## Background
+PhenoDigm2 is a Python package built and run with
+[`uv`](https://docs.astral.sh/uv/). Run all commands from the repository root.
 
-The repo consists of the following important parts:
+## Setup
 
- - **phenogigm2.py** is the executable program
- - **pd2** is a folder with the source code
- - **pd2tests** is a folder with unit tests
- - **resources** is a folder with input/configuration files 
+The package requires Python 3.12 or later. Create or update the project
+environment and confirm that the command-line interface is available:
 
- 
-## Building a database
-
-Preparing the phenodigm database is a multi-step process. The initialization
-step creates the build directory and copies in the packaged configuration
-resources; the remaining steps operate on that directory.
- 
-
-#### Prep [~5 min]
-
-To build a new instance, initialize an output directory such as
-`version-DATE`, where you can substitute DATE with the current date:
-
-```
-phenodigm2 --init version-DATE
+```bash
+uv sync
+uv run phenodigm --help
 ```
 
-Initialization creates `resources`, `data_raw`, and `data_processed` under the
-new build directory. The bundle name is required, and initialization fails if
-that path already exists.
+The `phenodigm` command is the supported entry point. The older
+`python3 phenodigm2.py ...` invocation is no longer used in these instructions.
 
-If you would like to customize the build, you can edit appropriate files
-in the `resources` directory. For example, the paths for data downloads are 
-encoded in a configuration file `dependencies.json`. Further information 
-is in that directory's README.md.
+Owltools is no longer supported by the build workflow. Ontology mappings are
+produced from the downloaded Phenio/Semsimian mapping files with the
+`ontology_mapping` action.
 
+## Release build
 
-### Multi-step build
+The examples use `vTODAY` as the release directory. Replace it with the actual
+version or date for the build.
 
-The build process takes several steps. The concise recipe is as follows 
-(including manual intervention steps):
+### 1. Initialize the release directory
 
+```bash
+uv run phenodigm --init vTODAY
 ```
-python3 phenodigm2.py download --db [PATH-TO-OUPUT-DIR]
+
+Initialization creates the directory layout and copies the packaged resources,
+including `dependencies.json`, into `vTODAY/resources`. It fails if the target
+already exists.
+
+### 2. Check the Phenio Zenodo record
+
+Before every release download, resolve the Semsimian Zenodo concept record to
+its latest version-specific record:
+
+```bash
+uvx zenodo_get -w - 18474575
 ```
 
-After the download, manual intervention is required to adjust some of
-the ontology files. 
+`-w -` prints the latest record's direct file URLs to standard output, so it is
+slightly simpler than creating a temporary file. Read the numeric ID following
+`/records/` in those URLs and replace the existing Semsimian record ID in:
 
- - Find file `hp-edit.owl` in folder `data_raw/obo/hp/`. If the content
- shows an error, this file should be replaced manually. Open file `data_raw/obo/hp.obo`
- in Protege and save it in owl format to replace `hp-edit.owl`.
- - Find file `mp-edit.owl` in folder `data_raw/obo/mp/`. If the content
- shows an error, this file should be replaced manually, similarly as for hp.
- Open file `data_raw/obo/mp.obo` in Protege and save it in owl format to replace
- `mp-edit.owl`.
-
-After the manual adjustment, the rest of the pipeline should run without
-the need for further intervention.
-
+```text
+vTODAY/resources/dependencies.json
 ```
-python3 phenodigm2.py build --db [PATH-TO-OUPUT-DIR]
-python3 phenodigm2.py owltools --db [PATH-TO-OUPUT-DIR]
-                               --owltools [PATH-TO-OWLTOOLS]
-python3 phenodigm2.py score --fast --db [PATH-TO-OUPUT-DIR]
-python3 phenodigm2.py index --db [PATH-TO-OUPUT-DIR]
-python3 phenodigm2.py status --db [PATH-TO-OUPUT-DIR]
-``` 
 
+To keep the URL list for release records instead, use:
 
+```bash
+uvx zenodo_get -w zenodo_urls 18474575
+```
 
-#### Download [~10 min]
+Review the other dependency URLs before continuing. If OMIM downloads are
+required, provide a valid API key in the environment:
 
-This stage reads a list of dependencies from the `resources` directory
-and downloads data files.
+```bash
+export OMIM_API_KEY="<your_key_here>"
+```
 
-The downloaded files are stored under `data_raw` in the 
-output directory, which is itself partitioned into subdirectories.
+### 3. Download resources
 
+```bash
+uv run phenodigm download --db vTODAY
+```
 
-#### Database build [<1 min]
+The download action uses `vTODAY/resources/dependencies.json` and writes the
+release inputs under `vTODAY/data_raw`. Check file sizes and contents against a
+previous release before continuing.
 
-This stage creates an sqlite database within the output directory and
-transfers data into the database. 
+### 4. Build the SQLite database
 
-The database file is stored in the output directory. It's name starts 
-with a prefix `phenodigm2` and includes the name of the directory.
+```bash
+uv run phenodigm build --db vTODAY
+```
 
-This stage also creates some processed data files. These are stored
-under `data_processed` in the output directory.
+This action creates and populates `phenodigm2-vTODAY.sqlite`. It remains a
+required step in the current package: ontology mapping loads its results into
+this database, and scoring reads the populated annotation tables.
 
+### 5. Load Phenio ontology mappings
 
-#### Owltools [~5 hours]
+```bash
+uv run phenodigm ontology_mapping --db vTODAY
+```
 
-This stage launches `owltools` processes that compute similarities
-between phenotype ontology terms. This can be a time-consuming
-and memory-intensive step. 
+The action transforms the downloaded Phenio/Semsimian HP-to-HP and HP-to-MP
+files, filters them by information content, and loads the mappings into SQLite.
+To change the default IC threshold, use:
 
-Option `--owltools_mem` determines the amount of heap space allocated
-to each java process.
+```bash
+uv run phenodigm ontology_mapping \
+  --ontology_mapping_min_ic <IC> \
+  --db vTODAY
+```
 
-Option `--owltools_min_ic` determines the information content threshold
-for outputing term-to-term matches. 
+`ontology_mapping` is the positional action. The similarly named
+`--ontology_mapping` option configures an executable and is not the action
+selector.
 
+### 6. Score disease-model associations
 
-#### Scoring [~30 hours]
+```bash
+uv run phenodigm score --fast --db vTODAY
+```
 
-This stage uses owltools scores for individual phenotype terms to
-compute scores comparing sets of terms. Such sets of terms can be 
-associated with diseases or mouse models. This stage thus computes
-model-model, model-disease, disease-model, and disease-disease scores.  
+`--fast` limits the calculation to disease-model associations. Without it, the
+package also calculates model-model and disease-disease associations, requiring
+considerably more time and disk space. Use `--cores <N>` to select the scoring
+worker count.
 
-Option `--fast` instructs the program to compute only disease-model 
-associations. The estimated running time is based on this fast option. 
-The full calculation will take several times longer.
+### 7. Create database indexes
 
+```bash
+uv run phenodigm index --db vTODAY
+```
 
-#### Indexing [~1 hours]
+### 8. Write the Parquet release output
 
-This stage create database indexes on some database tables.
+```bash
+uv run phenodigm parquet --db vTODAY
+```
 
+This creates `vTODAY/output/parquet`, containing the document datasets required
+by EBI to build the PhenoDigm Solr index. The output is published atomically and
+is not replaced unless `--overwrite` is supplied. See [PARQUET.md](PARQUET.md)
+for the schemas, bundle layout, filtering options, and custom destination flag.
 
-#### Status
+## Optional actions
 
-This stage is optional. It does not introduce any changes to the database. 
-It does create a number of files in the output directory holding descriptive
-statistics about the database tables.
+Inspect the completed database with:
 
+```bash
+uv run phenodigm status --db vTODAY
+```
 
+A local Solr core can still be built. First prepare the self-contained Solr
+output directory:
+
+```bash
+uv run phenodigm solr-prepare --db vTODAY
+```
+
+This creates `vTODAY/output/solr/dc-solr-7.5.yml` and the matching
+`solrcores7.5` volume directory; no manual copy is needed. The action is safe to
+rerun and preserves an existing Compose file. Start the bundled server, then
+populate its core:
+
+```bash
+docker compose -f vTODAY/output/solr/dc-solr-7.5.yml up -d
+uv run phenodigm solr \
+  --solr_url http://localhost:8984/solr/ \
+  --db vTODAY
+```
+
+Stop the bundled server when validation is complete:
+
+```bash
+docker compose -f vTODAY/output/solr/dc-solr-7.5.yml down
+```
+
+See [SOLR.md](SOLR.md) for server, core-name, URL, and output-directory options.
+The release-oriented local Solr procedure is also described in
+[IMPC_RELEASE.md](IMPC_RELEASE.md).

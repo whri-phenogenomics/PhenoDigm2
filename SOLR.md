@@ -1,24 +1,67 @@
-## Building a Phenodigm2 Solr core
+# Building a PhenoDigm2 Solr core
 
-### Background
+A local Solr core is optional. The standard EBI hand-off is the Parquet bundle,
+but a Solr 7.5 core can still be built for compatibility testing.
 
-A solr core is an alternative manner of storing and indexing data. 
-After building an sqlite database, you can create a solr core by running
-the following command
+## Prepare the Solr output bundle
 
+Run the preparation action after the SQLite database is complete:
 
+```bash
+uv run phenodigm solr-prepare --db vTODAY
 ```
-python3 phenodigm2.py solr --db [PATH-TO-OUPUT-DIR]
-                           --solr_cores_dir [PATH-TO-SOLR-CORES]
+
+This creates an idempotent, self-contained layout:
+
+```text
+vTODAY/output/solr/
+├── dc-solr-7.5.yml
+└── solrcores7.5/
 ```
 
-This does not change the database. It does read the sqlite db and create a new 
-core at the indicated location. The core will be saved in a directory matching the 
-db name; the core identifier is always `phenodigm2`. 
+No manual copy from the repository root is required. The same command can be
+used to add the layout to a release bundle created by an older package version.
+An existing Compose file is preserved so release-specific edits are not
+overwritten. The Compose file mounts its adjacent `solrcores7.5` directory into
+the Solr container.
 
-Option `--solr_url` sets the url of an active Solr server. The default is to use 
-a localhost server with port 8983 (the default Solr setting).
+## Start Solr and build the core
 
-Option `--solr_corename` sets the solr name of the core. The default is to use
-`phenodigm`.
+Container lifecycle remains explicit; `phenodigm` does not silently start or
+stop Docker. Start the bundled server with:
 
+```bash
+docker compose -f vTODAY/output/solr/dc-solr-7.5.yml up -d
+```
+
+The bundled Compose configuration exposes Solr at port 8984. Create and fill
+the core with:
+
+```bash
+uv run phenodigm solr \
+  --solr_url http://localhost:8984/solr/ \
+  --db vTODAY
+```
+
+The `solr` action defensively runs the same preparation logic before building.
+When `--solr_cores_dir` is omitted, core data is written to
+`vTODAY/output/solr/solrcores7.5`, matching the Compose volume. An explicit
+`--solr_cores_dir PATH` remains available for an externally managed server.
+
+If Solr is already running outside the bundled Compose setup, `solr-prepare` can
+be omitted: the `solr` action will still create any missing bundle files before
+building the core. The bundled Compose workflow needs the explicit preparation
+step first so its configuration exists before Docker starts.
+
+The default Solr core name is `phenodigm`; override it with
+`--solr_corename NAME`. The Solr and Parquet writers use the same document
+filters:
+
+- `--output_min_ontology_ontology_score`
+- `--output_min_disease_model_2d_score`
+
+Stop the bundled server with:
+
+```bash
+docker compose -f vTODAY/output/solr/dc-solr-7.5.yml down
+```
