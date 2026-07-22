@@ -7,7 +7,7 @@
    },
    "semsimian": {
     "comment": "Phenio semantic similarity files",
-    "url": "https://zenodo.org/api/records/18474575/files/{filename}/content",
+    "url": "https://zenodo.org/api/records/18500112/files/{filename}/content",
     "targetdir": "obo",
     "filename": [
       "HP_vs_HP_semsimian_phenio.tsv.tar.gz",
