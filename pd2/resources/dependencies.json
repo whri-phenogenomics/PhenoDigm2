@@ -73,9 +73,9 @@
   	"targetdir": "annotations",
     "filename": ["en_product6.xml", "en_product1.xml",
     	"en_product3_146.xml", "en_product3_147.xml",
-    	"en_product3_148.xml", "en_product3_149.xml", 
+    	"en_product3_148.xml",  
     	"en_product3_150.xml", "en_product3_152.xml",
-    	"en_product3_151.xml",
+    	
     	"en_product3_156.xml", "en_product3_181.xml",
     	"en_product3_182.xml", "en_product3_183.xml",
     	"en_product3_184.xml", "en_product3_185.xml",
@@ -89,7 +89,8 @@
     	"en_product3_203.xml", "en_product3_204.xml",
     	"en_product3_205.xml", "en_product3_209.xml",
     	"en_product3_212.xml", "en_product3_216.xml",    	
-    	"en_product3_231.xml"]
+    	"en_product3_231.xml", "en_product3_233.xml",
+		"en_product3_235.xml"]
   },
   "hpoa": {
     "comment": "HPO genotype-phenotype associations",

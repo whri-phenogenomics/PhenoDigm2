@@ -1,7 +1,6 @@
 {   
   "cardiac": "en_product3_146.xml",
   "developmental": "en_product3_147.xml",
-  "sucking/swallowing": "en_product3_149.xml",
   "metabolism": "en_product3_150.xml",
   "gastroenterological": "en_product3_152.xml",
   "neurological": "en_product3_181.xml",
@@ -31,5 +30,7 @@
   "teratologic": "en_product3_216.xml",
   "cardiac malformation": "en_product3_148.xml",
   "genetic": "en_product3_156.xml",
-  "rheumatological of childhood": "en_product3_231.xml"
+  "rheumatological of childhood": "en_product3_231.xml",
+  "transplant-related": "en_product3_233.xml",
+  "without a determined diagnosis": "en_product3_235.xml"
 }
