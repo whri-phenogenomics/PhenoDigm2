@@ -1,7 +1,7 @@
-""" Test suite for the dbbuild module
-    Tests the behaviour of phenodigm2.py build and index.
+"""Test suite for the dbbuild module
+Tests the behaviour of phenodigm2.py build and index.
 
-    @author: Diego Pava
+@author: Diego Pava
 """
 
 import pytest
@@ -224,11 +224,11 @@ def test_run_DBBuild_raises_OSError(tmp_path, action, mock_pd2dirs):
 # Tests the content of a table created from runDBBuild
 @pytest.mark.parametrize("mock_db_with_schema", ["build"], indirect=True)
 def test_run_DBBuild(mock_db_with_schema):
-    """  Takes a cursor and checks the table information created after runDBBuild.
+    """Takes a cursor and checks the table information created after runDBBuild.
 
-        Tests the runDBBuild expected behaviour by checking the table
-        was created correctly from a `.json` file. Checks the the table exists,
-        the number of columns, the column names, and column types.
+    Tests the runDBBuild expected behaviour by checking the table
+    was created correctly from a `.json` file. Checks the the table exists,
+    the number of columns, the column names, and column types.
 
     """
     # Get the cursor from the fixture
@@ -260,11 +260,11 @@ def test_run_DBBuild(mock_db_with_schema):
 # Tests indexes were created properly from the runDBIndexing function
 @pytest.mark.parametrize("mock_db_with_schema", ["index"], indirect=True)
 def test_run_DBNIndexing(mock_db_with_schema):
-    """  Takes a cursor and checks the index information created after runDBIndexing.
+    """Takes a cursor and checks the index information created after runDBIndexing.
 
-        Tests the runDBIndexing expected behaviour by checking the table
-        was created correctly from a `.json` file. Checks the index
-        in the json file exists within the database.
+    Tests the runDBIndexing expected behaviour by checking the table
+    was created correctly from a `.json` file. Checks the index
+    in the json file exists within the database.
 
     """
 

@@ -1,8 +1,9 @@
-""" Test suite for the prep module
-    Tests the behaviour of phenodigm2.py download 
+"""Test suite for the prep module
+Tests the behaviour of phenodigm2.py download
 
-    @author: Diego Pava
+@author: Diego Pava
 """
+
 import pytest
 import os
 import pd2.prep as pd2prep
@@ -15,6 +16,7 @@ import shutil
 
 
 # Test for fetchFromURL function
+
 
 # Define a mock class that behaves like a response to request.get.
 # Each function should mock the methods used by response in the fetchFromURL function.
@@ -43,6 +45,7 @@ def mock_get(monkeypatch):
 
     # Monkeypatch requests.get to behave like mock_get
     monkeypatch.setattr("requests.get", mock_get_function)
+
 
 # Test the normal functioning of fetchFromURL
 # Parametrize to test compressed and uncompressed files
@@ -73,6 +76,7 @@ def test_fetch_from_ulr(filename, tocompress, tmp_path, mock_get):
 
 # Tests for fetchUsingXMLQuery
 
+
 # Test fetchUsingXMLQuery on an empty querybase
 def test_fetch_using_xml_query_empty_querybase(tmp_path, mock_get):
     fetchUsingXmlQuery(
@@ -97,7 +101,7 @@ def mock_xml_file(tmp_path):
     yield query_xml_file
 
 
-# Test fetchUsingXMLQuery when there is a query. 
+# Test fetchUsingXMLQuery when there is a query.
 def test_fetch_using_xml_query_non_empty_querybase(tmp_path, mock_get, mock_xml_file):
     fetchUsingXmlQuery(
         "http://fakephenodigmwebsite.com",
@@ -111,6 +115,7 @@ def test_fetch_using_xml_query_non_empty_querybase(tmp_path, mock_get, mock_xml_
 
 
 # Tests for runDirPrep
+
 
 # Test the creation of datadir and dbdir
 # The `mock_pd2dirs` fixture mocks a config object for tests.
@@ -143,22 +148,23 @@ def test_run_dir_prep_seeds_missing_resources_dir(mock_pd2dirs):
 
 # Test runDownloads
 
+
 # Fixture to mock `dependencies.json` and `catalog.xml`
 @pytest.fixture
 def mock_run_downloads_dependencies(monkeypatch, mock_pd2dirs):
-    """ Fixture to write mock `dependecies.json` and `catalog.xml` files.
+    """Fixture to write mock `dependecies.json` and `catalog.xml` files.
 
-        The fixture takes mock directories from the `mock_pd2dirs` fixture,
-        writes the `dependencies.json` and `catalog.xml` files, monkeypatches
-        the functions used within `runDownloads` to isolate their behaviour and
-        returns the necessary directories.
+    The fixture takes mock directories from the `mock_pd2dirs` fixture,
+    writes the `dependencies.json` and `catalog.xml` files, monkeypatches
+    the functions used within `runDownloads` to isolate their behaviour and
+    returns the necessary directories.
 
-        Returns: The 4 directories from mock_pd2dirs with necessary download files.
+    Returns: The 4 directories from mock_pd2dirs with necessary download files.
 
-        Notes: The functions used within `runDownloads` are monkeypatched to test
-        the r`unDownloads` function irrespective of the its internal functions.
-        This is done so if the functionality of the internal methods change, the
-        test for `runDownloads` still assesses the function independently.
+    Notes: The functions used within `runDownloads` are monkeypatched to test
+    the r`unDownloads` function irrespective of the its internal functions.
+    This is done so if the functionality of the internal methods change, the
+    test for `runDownloads` still assesses the function independently.
 
     """
 
@@ -210,7 +216,7 @@ def mock_run_downloads_dependencies(monkeypatch, mock_pd2dirs):
 
     monkeypatch.setattr(pd2prep, "fetchUsingXmlQuery", mock_fetchUsingXmlQuery)
 
-    # Monkeypatch fetchFromURL to write a simplified zipped file. 
+    # Monkeypatch fetchFromURL to write a simplified zipped file.
     def mock_fetchFromURL(url, filename, outdir):
         with open(os.path.join(outdir, filename), "wb") as f:
             f.write(b"fake_response")
@@ -227,6 +233,7 @@ def mock_run_downloads_dependencies(monkeypatch, mock_pd2dirs):
     monkeypatch.setattr(shutil, "copy", mock_shutil_copy)
 
     return rootdir, datadir, resourcesdir, dbdir
+
 
 # TODO: write tests for the OMIM exception
 # TODO: write tests to check the secret API key

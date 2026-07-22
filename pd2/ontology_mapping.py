@@ -194,7 +194,9 @@ def transform_one_ontology_mapping_file(config, onto_pair):
             )
 
             similarity_column = CACHE_TO_PHENIO_COLUMNS[SIMILARITY_COLUMN]
-            information_content_column = CACHE_TO_PHENIO_COLUMNS[INFORMATION_CONTENT_COLUMN]
+            information_content_column = CACHE_TO_PHENIO_COLUMNS[
+                INFORMATION_CONTENT_COLUMN
+            ]
             lcs_column = CACHE_TO_PHENIO_COLUMNS[LCS_COLUMN]
 
             transformed = (

@@ -161,9 +161,7 @@ class TestPhenodimgtable:
                 self.wrapped.close()
 
         tracking_connection = TrackingConnection(connection)
-        monkeypatch.setattr(
-            phenod_table, "getConn", lambda: tracking_connection
-        )
+        monkeypatch.setattr(phenod_table, "getConn", lambda: tracking_connection)
 
         with pytest.raises(sqlite3.IntegrityError):
             phenod_table.save_batches(
@@ -639,7 +637,6 @@ class TestModelModel:
         assert setup_model.data == [list(test_data.values())]
 
 
-
 class TestModelModelGenotype:
     # Define test data
     # Gene can be a str or a list
@@ -684,7 +681,6 @@ class TestModelIdPhenotype:
     def test_data(self, request):
         return {"id": "test_id", "phenotype": request.param}
 
-    
     @pytest.mark.parametrize("setup_model", [ModelIdPhenotype], indirect=True)
     @pytest.mark.parametrize(
         "test_data",
