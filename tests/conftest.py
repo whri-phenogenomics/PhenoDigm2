@@ -1,9 +1,19 @@
-""" Configuration file to share fixtures between modules
+"""Configuration file to share fixtures between modules
 
 @author: Diego Pava
 """
+
 import pytest
 from pd2 import tools as pd2tools
+
+from tests.parquet_test_support import build_document_database
+
+
+@pytest.fixture
+def document_database(tmp_path):
+    """Provide a fresh minimal database for shared document-output tests."""
+
+    return build_document_database(tmp_path)
 
 
 # Creates a mock config and patches the pd2tools.getPD2dirs function.

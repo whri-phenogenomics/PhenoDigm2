@@ -14,6 +14,7 @@ from . import dbbuild
 from . import export
 from . import ontology_mapping
 from . import owl
+from . import parquet as parquet_export
 from . import prep
 from . import query
 from . import score
@@ -23,9 +24,9 @@ from . import tools
 from . import post_process
 
 
-
 # ############################################################################
 # create a parser object for the phenodigm executable
+
 
 def build_parser():
     """Build the argparse parser for the phenodigm2 executable."""
@@ -33,94 +34,191 @@ def build_parser():
     parser = argparse.ArgumentParser(description="PhenoDigm2")
 
     # for outputs
-    parser.add_argument("--db", action="store",
-                        help="Database directory")
+    parser.add_argument(
+        "--db",
+        action="store",
+        help="Database directory",
+    )
 
     # for internal tuning/thresholding
-    parser.add_argument("--phenodigm_min_perc", action="store",
-                        help="minimal perc value for phenodigm score",
-                        default=60)
-    parser.add_argument("--phenodigm_min_raw", action="store",
-                        help="minimal raw value for phenodigm score",
-                        default=1.3)
-    parser.add_argument("--impc_pval", action="store",
-                        help="p-value threshold for IMPC statistical tests",
-                        default=1e-4)
-    parser.add_argument("--cores", action="store",
-                        help="number of cores used in phenodigm scoring",
-                        default=4, type=int)
-    parser.add_argument("--fast", action="store_true",
-                        help="only compute disease-model associations",
-                        default=False)
-    parser.add_argument("--verbose", action="store_true",
-                        help="Write extra output to stdout",
-                        default=False)
+    parser.add_argument(
+        "--phenodigm_min_perc",
+        action="store",
+        help="minimal perc value for phenodigm score",
+        default=60,
+    )
+    parser.add_argument(
+        "--phenodigm_min_raw",
+        action="store",
+        help="minimal raw value for phenodigm score",
+        default=1.3,
+    )
+    parser.add_argument(
+        "--impc_pval",
+        action="store",
+        help="p-value threshold for IMPC statistical tests",
+        default=1e-4,
+    )
+    parser.add_argument(
+        "--cores",
+        action="store",
+        help="number of cores used in phenodigm scoring",
+        default=4,
+        type=int,
+    )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="only compute disease-model associations",
+        default=False,
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Write extra output to stdout",
+        default=False,
+    )
 
     # for "export"
-    parser.add_argument("--table", action="store",
-                        help="For use with --export",
-                        default="")
-    parser.add_argument("--where", action="store",
-                        help="for use with --export",
-                        default="")
+    parser.add_argument(
+        "--table", action="store", help="For use with --export", default=""
+    )
+    parser.add_argument(
+        "--where", action="store", help="for use with --export", default=""
+    )
+
+    # for "parquet"
+    parser.add_argument(
+        "--parquet-dir",
+        action="store",
+        help=(
+            "Parquet bundle directory "
+            f"(default: <db>/{parquet_export.DEFAULT_OUTPUT_DIRECTORY})"
+        ),
+        default=None,
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace an existing Parquet bundle",
+        default=False,
+    )
 
     # for "explain"
-    parser.add_argument("--model", action="store",
-                        help="used with --query and --compute, a model id", default="")
-    parser.add_argument("--disease", action="store",
-                        help="used with --query and --compute, a disease id", default="")
-    parser.add_argument("--gene", action="store",
-                        help="used with --explain, a gene id", default="")
-    parser.add_argument("--term", action="store",
-                        help="used with --query, an ontology term", default="")
-    parser.add_argument("--sim", action="store_true",
-                        help="used with --query, show score data",
-                        default=False)
-    parser.add_argument("--phenotype", action="store_true",
-                        help="used with --query, show phenotypes",
-                        default=False)
-    parser.add_argument("--association", action="store_true",
-                        help="used with --query, show phenodigm associations",
-                        default=False)
-    parser.add_argument("--score", action="store_true",
-                        help="used --query, show phenodigm calculations",
-                        default=False)
+    parser.add_argument(
+        "--model",
+        action="store",
+        help="used with --query and --compute, a model id",
+        default="",
+    )
+    parser.add_argument(
+        "--disease",
+        action="store",
+        help="used with --query and --compute, a disease id",
+        default="",
+    )
+    parser.add_argument(
+        "--gene", action="store", help="used with --explain, a gene id", default=""
+    )
+    parser.add_argument(
+        "--term", action="store", help="used with --query, an ontology term", default=""
+    )
+    parser.add_argument(
+        "--sim",
+        action="store_true",
+        help="used with --query, show score data",
+        default=False,
+    )
+    parser.add_argument(
+        "--phenotype",
+        action="store_true",
+        help="used with --query, show phenotypes",
+        default=False,
+    )
+    parser.add_argument(
+        "--association",
+        action="store_true",
+        help="used with --query, show phenodigm associations",
+        default=False,
+    )
+    parser.add_argument(
+        "--score",
+        action="store_true",
+        help="used --query, show phenodigm calculations",
+        default=False,
+    )
 
     # running owltools to obtain ontology term-term similarities
-    parser.add_argument("--owltools", action="store",
-                        help="complete command to run owltools",
-                        default="owltools")
-    parser.add_argument("--owltools_mem", action="store",
-                        help="heap size allocation for owltools",
-                        default="26G")
-    parser.add_argument("--owltools_min_ic", action="store",
-                        help="minimal ic for owltools output",
-                        default=2.5)
+    parser.add_argument(
+        "--owltools",
+        action="store",
+        help="complete command to run owltools",
+        default="owltools",
+    )
+    parser.add_argument(
+        "--owltools_mem",
+        action="store",
+        help="heap size allocation for owltools",
+        default="26G",
+    )
+    parser.add_argument(
+        "--owltools_min_ic",
+        action="store",
+        help="minimal ic for owltools output",
+        default=2.5,
+    )
 
     # processing Phenio mappings to obtain ontology term-term similarities
-    parser.add_argument("--ontology_mapping", action="store",
-                        help="complete command to TL ontology mapping (phenio files)",
-                        default="ontology_mapping")
-    parser.add_argument("--ontology_mapping_min_ic", action="store",
-                        help="minimal ic for ontology_mapping output",
-                        default=2.5)
+    parser.add_argument(
+        "--ontology_mapping",
+        action="store",
+        help="complete command to TL ontology mapping (phenio files)",
+        default="ontology_mapping",
+    )
+    parser.add_argument(
+        "--ontology_mapping_min_ic",
+        action="store",
+        help="minimal ic for ontology_mapping output",
+        default=2.5,
+    )
 
-    # creating solr core, server addresses, new sets of thresholds
-    parser.add_argument("--solr_url", action="store",
-                        help="url for communicating with solr",
-                        default="http://localhost:8983/solr/")
-    parser.add_argument("--solr_cores_dir", action="store",
-                        help="directory holding localhost solr instance",
-                        default="/tmp/phenodigm2/")
-    parser.add_argument("--solr_corename", action="store",
-                        help="name of core set in core.properties",
-                        default="phenodigm")
-    parser.add_argument("--solr_min_mapscore", action="store",
-                        help="minimum ontology-ontology score",
-                        default=1.5)
-    parser.add_argument("--solr_min_2dscore", action="store",
-                        help="minimum raw phenodigm score",
-                        default=2.2)
+    # creating a Solr core and configuring its server addresses
+    parser.add_argument(
+        "--solr_url",
+        action="store",
+        help="url for communicating with solr",
+        default="http://localhost:8983/solr/",
+    )
+    parser.add_argument(
+        "--solr_cores_dir",
+        action="store",
+        help="directory holding localhost solr instance",
+        default="/tmp/phenodigm2/",
+    )
+    parser.add_argument(
+        "--solr_corename",
+        action="store",
+        help="name of core set in core.properties",
+        default="phenodigm",
+    )
+
+    # These shared output thresholds replace the legacy Solr-only names:
+    # solr_min_mapscore -> output_min_ontology_ontology_score
+    # solr_min_2dscore  -> output_min_disease_model_2d_score
+    parser.add_argument(
+        "--output_min_ontology_ontology_score",
+        action="store",
+        type=float,
+        help="minimum sqrt(simJ * ic) ontology-ontology mapping score",
+        default=1.5,
+    )
+    parser.add_argument(
+        "--output_min_disease_model_2d_score",
+        action="store",
+        type=float,
+        help="minimum 2D raw score for computed disease-model associations",
+        default=2.2,
+    )
 
     # Initialization is a standalone mode, not a pipeline stage. Keeping it
     # mutually exclusive with the positional action prevents an accidental
@@ -145,6 +243,7 @@ def build_parser():
             "score",
             "index",
             "solr",
+            "parquet",
             "query",
             "export",
             "compute",
@@ -158,6 +257,7 @@ def build_parser():
 
 # ############################################################################
 # Execute the program
+
 
 def main(argv=None):
     """Parse arguments and run the requested PhenoDigm2 action."""
@@ -195,6 +295,11 @@ def main(argv=None):
     if config.action == "export":
         export.exportTables(config)
         exit()
+    if config.action == "parquet":
+        tools.log("Starting PhenoDigm2 [parquet]")
+        parquet_export.runParquetBundleBuild(config)
+        tools.log("Done")
+        return
 
     tools.log("Starting PhenoDigm2 [" + config.action + "]")
 
