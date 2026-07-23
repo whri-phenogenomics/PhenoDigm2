@@ -156,7 +156,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "luigi", specifier = ">=3.6.0" },
-    { name = "polars", specifier = ">=1.42.1" },
+    { name = "polars", specifier = ">=1.32.3" },
     { name = "pydantic", specifier = ">2.10" },
     { name = "pyyaml", specifier = ">6.0" },
     { name = "requests", specifier = ">=2.32.5" },

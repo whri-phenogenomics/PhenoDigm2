@@ -93,11 +93,16 @@ def load_one_ontology_cache_file(config, onto_pair):
     # Concat both datasets
     rows = pl.concat((canonical, reversed_rows))
 
-    # Init model and write a generator containing batches of rows from the df
+    # Init model and write a generator containing batches of rows from the df.
+    # LazyFrame.collect_batches streams the query in row-count chunks, but it was
+    # only added in newer polars. On older polars (>=1.32.3) fall back to
+    # collecting once and slicing, which materializes this (IC-filtered) frame.
     mapdata = pd2models.ModelOntologyOntologyMapping(config.dbfile)
-    batches = (
-        batch.iter_rows() for batch in rows.collect_batches(chunk_size=mapdata.insertN)
-    )
+    if hasattr(rows, "collect_batches"):
+        frames = rows.collect_batches(chunk_size=mapdata.insertN)
+    else:
+        frames = rows.collect().iter_slices(mapdata.insertN)
+    batches = (batch.iter_rows() for batch in frames)
     mapdata.save_batches(batches)
 
 
