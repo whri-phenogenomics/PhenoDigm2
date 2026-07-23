@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from pd2 import cli, solr
+from phenodigm2 import cli, solr
 
 
 def make_config(build_dir, solr_cores_dir=None):

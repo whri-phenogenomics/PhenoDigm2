@@ -1,155 +1,147 @@
 # Examples
 
-This file contains a number of usage examples. Its parts
-include a section of performing targeted queries and performing
-exports of entire database tables.
+Usage examples for inspecting a PhenoDigm2 database: targeted queries, on-demand
+score computation, and full-table exports.
 
+These are shown **primarily** with the Python API (`PhenoDigm`); the equivalent
+`phenodigm` CLI command follows each one. Set up a handle to the build directory
+once — replace `[DB]` with the path to the directory holding the SQLite
+database:
 
-## Examples of `phenodigm2.py query`
+```python
+from phenodigm2 import PhenoDigm
 
-`phenodigm2.py query` is a utility that extract bits of information
-from a phenodigm database. It can also provide a breakdown of
-how phenodigm scores (stored in the db) are computed from the raw data.
-
-The utility covers a number of usage cases. Some are outlined in
-a question/answer format here.
-
-All the commands should start with
-
-```
-python3 phenodigm2.py query --db [DB] ...
+pd = PhenoDigm("[DB]")
 ```
 
-Here, replace the `[DB]` placeholder with the path to the directory 
-holding the sqlite database. 
+The CLI equivalents all take the form `phenodigm query --db [DB] ...`. Both forms
+print their results to stdout.
 
+## Queries
+
+`query` extracts bits of information from a PhenoDigm database, including a
+breakdown of how stored PhenoDigm scores are computed from the raw data.
 
 ### What does a phenotype term mean?
 
-To obtain information about a single term,
+A single term, or several space-separated terms (note the quotes around the
+list):
 
-```
-... --term HP:0009695
-```
-
-To obtain information about multiple terms
-
-```
-... --term "HP:0009695 HP:0025332"
+```python
+pd.query(term="HP:0009695")
+pd.query(term="HP:0009695 HP:0025332")
 ```
 
-In this case, note the quotations about the space-separated list.
-
+```bash
+phenodigm query --db [DB] --term "HP:0009695 HP:0025332"
+```
 
 ### What does a disease id mean?
 
-To query multiple diseases,
-
-```
-... --disease "OMIM:114480 OMIM:134300"
+```python
+pd.query(disease="OMIM:114480 OMIM:134300")
 ```
 
+```bash
+phenodigm query --db [DB] --disease "OMIM:114480 OMIM:134300"
+```
 
 ### What models contain a given modified gene?
 
-To query multiple diseases,
-
-```
-... --gene "Irf Rad9a"
+```python
+pd.query(gene="Irf Rad9a")
 ```
 
-Note that the search strings can contain incomplete gene names. 
-In this case, for example, the query `Irf` can display 
-data for models with mutated `Irf5` as well as `Irf8`. 
+```bash
+phenodigm query --db [DB] --gene "Irf Rad9a"
+```
 
-
+Search strings can be incomplete gene names: `Irf` matches models with mutated
+`Irf5` as well as `Irf8`.
 
 ### What phenotypes are associated with a model/disease?
 
-The database holds associations between models/diseases and
-their phenotypes. To query these associations,
+Add `phenotype=True` alongside a `model` or `disease` list (it is not possible to
+query models and diseases at once):
 
-```
-... --phenotype --model "XXX YYY"
-... --phenotype --disease "OMIM:114480 OMIM:134300"
-```
-
-Note the presence of an option `--phenotype` in addition
-to the `--model` or `--disease` lists. Also note that
-it is not possible to query models and disease at once.  
-
-
-### How similar are phenotypes terms?
-
-This question is about Phenio/Semsimian ontology-mapping scores.
-
-```
-... --sim --term "HP:0009695 HP:0025332"
+```python
+pd.query(phenotype=True, model="XXX YYY")
+pd.query(phenotype=True, disease="OMIM:114480 OMIM:134300")
 ```
 
-Note the presence of an option `--score` in addition to
-the list of phenotype terms.
+```bash
+phenodigm query --db [DB] --phenotype --model "XXX YYY"
+```
 
-The output to this command consists of a table for a symmetric matrix.
-The scores are loaded from the Phenio/Semsimian mappings; they form the raw
-inputs for phenodigm calculations (see below).
+### How similar are phenotype terms?
 
+Phenio/Semsimian ontology-mapping scores, via `sim=True`:
+
+```python
+pd.query(sim=True, term="HP:0009695 HP:0025332")
+```
+
+```bash
+phenodigm query --db [DB] --sim --term "HP:0009695 HP:0025332"
+```
+
+The output is a table for a symmetric matrix. These scores are loaded from the
+Phenio/Semsimian mappings and form the raw inputs for PhenoDigm calculations.
 
 ### How similar are a model and a disease?
 
-Comparisons of models and diseases are based on phenodigm scores.
-The stored values can be queries for any combination of models and
-diseases.
+Stored PhenoDigm scores, for any combination of models and diseases, via
+`score=True`:
 
-```
-... --score --disease "DECIPHER:14 DECIPHER:18" --model "MODEL:10"
-```
-
-The resulting table holds all model-model, model-disease, disease-model,
-and disease-disease entries for all the given keys.   
-
-
-## Examples of `phenodigm2.py compute`
-
-The `compute` utility computes or re-computes phenodigm associations 
-between two models, two diseases, or a model and a disease. The
-output is more verbose that the `query` and can provide details
-even for those associations that are not recorded in the database due
-to thresholding.
-
-```
-python3 phenodigm2.py compute --db [DB] 
-        --model "MODEL:10" --diseases "OMIM:3000"
+```python
+pd.query(score=True, disease="DECIPHER:14 DECIPHER:18", model="MODEL:10")
 ```
 
-Compute commands can take a long time to finish. They save results
-in a cache file, so repeat queries will be much faster.
-
-
-## Examples of `phenodigm2.py export`
-
-`phenodigm2.py export` is a utility to extract entire tables
-from the database into a tab-separated format. 
-
-The core command has the following form
-
-```
-python3 phenodigm2.py export --db [DB] --table [TABLENAME]
+```bash
+phenodigm query --db [DB] --score --disease "DECIPHER:14 DECIPHER:18" --model "MODEL:10"
 ```
 
-This displays information on screen. To save to disk, the output 
-can be piped into a compressor and then into a target file.
+The resulting table holds all model-model, model-disease, disease-model, and
+disease-disease entries for the given keys.
 
+## Compute
+
+`compute` computes or re-computes PhenoDigm associations between two models, two
+diseases, or a model and a disease. It is more verbose than `query` and reports
+details even for associations that are not stored in the database due to
+thresholding:
+
+```python
+pd.compute(model="MODEL:10", disease="OMIM:3000")
 ```
-python3 phenodigm2.py export --db [DB] --table [TABLENAME]
-		| gzip > [TABLENAME].tsv.gz
+
+```bash
+phenodigm compute --db [DB] --model "MODEL:10" --disease "OMIM:3000"
 ```
 
+Compute commands can take a long time to finish. They cache their results, so
+repeat calls are much faster.
 
-It is also possible to export a part of a table by supplementing
-the base query with a `WHERE` clause.
+## Export
 
+`export` extracts entire tables from the database into tab-separated text on
+stdout:
+
+```python
+pd.export(table="[TABLENAME]")
+pd.export(table="[TABLENAME]", where="id LIKE 'MGI%'")   # export part of a table
 ```
-python3 phenodigm2.py export --db [DB] --table [TABLENAME]
-        --where "id LIKE 'MGI%'" | gzip > [TABLENAME.MGI].tsv.gz
+
+```bash
+phenodigm export --db [DB] --table [TABLENAME]
+phenodigm export --db [DB] --table [TABLENAME] --where "id LIKE 'MGI%'"
+```
+
+To save to disk, redirect or pipe the CLI output through a compressor — a shell
+convenience the CLI form is best suited for:
+
+```bash
+phenodigm export --db [DB] --table [TABLENAME] | gzip > [TABLENAME].tsv.gz
+phenodigm export --db [DB] --table [TABLENAME] \
+  --where "id LIKE 'MGI%'" | gzip > [TABLENAME].MGI.tsv.gz
 ```

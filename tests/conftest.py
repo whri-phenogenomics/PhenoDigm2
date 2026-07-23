@@ -4,7 +4,7 @@
 """
 
 import pytest
-from pd2 import tools as pd2tools
+from phenodigm2 import tools as pd2tools
 
 from tests.parquet_test_support import build_document_database
 

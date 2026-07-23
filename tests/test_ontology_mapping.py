@@ -8,8 +8,8 @@ from types import SimpleNamespace
 import polars as pl
 import pytest
 
-from pd2.dbmodels import ModelOntologyOntologyMapping
-from pd2.ontology_mapping import (
+from phenodigm2.dbmodels import ModelOntologyOntologyMapping
+from phenodigm2.ontology_mapping import (
     load_one_ontology_cache_file,
     run_ontology_mapping_processing,
     transform_one_ontology_mapping_file,

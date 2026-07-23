@@ -13,8 +13,11 @@ uv sync
 uv run phenodigm --help
 ```
 
-The `phenodigm` command is the supported entry point. The older
-`python3 phenodigm2.py ...` invocation is no longer used in these instructions.
+PhenoDigm2 can be driven two equivalent ways: **primarily** as a Python library
+(`from phenodigm2 import PhenoDigm`) and via the `phenodigm` / `phenodigm2`
+command-line entry point. This guide walks through the CLI steps in detail; the
+equivalent Python API calls are summarized under [Release build](#release-build)
+and in the [README stage reference](README.md#stage-reference).
 
 Owltools is no longer supported by the build workflow. Ontology mappings are
 produced from the downloaded Phenio/Semsimian mapping files with the
@@ -24,6 +27,28 @@ produced from the downloaded Phenio/Semsimian mapping files with the
 
 The examples use `vTODAY` as the release directory. Replace it with the actual
 version or date for the build.
+
+### Python API equivalent
+
+The whole sequence below is also available from Python, which is the primary way
+to drive PhenoDigm2 from a script or an Airflow DAG:
+
+```python
+from phenodigm2 import PhenoDigm
+
+pd = PhenoDigm("vTODAY")
+pd.init()                     # step 1 (edit dependencies.json before download)
+pd.download()                 # step 3
+pd.build()                    # step 4
+pd.ontology_mapping()         # step 5  (ontology_mapping_min_ic=<IC> to tune)
+pd.score(fast=True, cores=4)  # step 6
+pd.index()                    # step 7
+pd.parquet()                  # step 8  (overwrite=True to replace)
+```
+
+Per-call keyword arguments mirror the CLI flags used in the detailed steps that
+follow. See [`examples/airflow/phenodigm_dag.py`](examples/airflow/phenodigm_dag.py)
+for the pipeline wired as an Airflow DAG.
 
 ### 1. Initialize the release directory
 

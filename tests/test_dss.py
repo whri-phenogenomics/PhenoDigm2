@@ -1,11 +1,11 @@
 """
-Tests for contents of pd2/scoring.py
+Tests for contents of phenodigm2/scoring.py
 (Classes to produce scores)
 """
 
 import unittest
 from os.path import join, dirname
-from pd2 import dss
+from phenodigm2 import dss
 
 
 class IdPhenotypeMapTests(unittest.TestCase):

@@ -8,9 +8,9 @@ from types import SimpleNamespace
 import polars as pl
 import pytest
 
-from pd2 import parquet
-from pd2.documents import DATASET_SPECS
-from pd2.parquet import to_polars_schema
+from phenodigm2 import parquet
+from phenodigm2.documents import DATASET_SPECS
+from phenodigm2.parquet import to_polars_schema
 
 
 @pytest.fixture

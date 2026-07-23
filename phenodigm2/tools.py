@@ -57,22 +57,23 @@ def getPD2dirs(config):
 def getBundledResourcesDir():
     """Return a Traversable pointing at the resources bundled in the package.
 
-    These files ship inside the wheel (``pd2/resources``) and are copied into a
-    build directory's ``resources`` folder by ``prep.runDirPrep`` when missing.
+    These files ship inside the wheel (``phenodigm2/resources``) and are copied
+    into a build directory's ``resources`` folder by ``prep.runDirPrep`` when
+    missing.
     """
 
-    return files("pd2") / "resources"
+    return files("phenodigm2") / "resources"
 
 
 def getBundledRScriptsDir():
     """Return a Traversable pointing at the R scripts bundled in the package.
 
-    These ship inside the wheel (``pd2/rscripts``) and are copied into a build
-    directory's ``post_processing/scripts`` folder by the post-process pipeline,
-    so the ``post-process`` action is self-contained after an install.
+    These ship inside the wheel (``phenodigm2/rscripts``) and are copied into a
+    build directory's ``post_processing/scripts`` folder by the post-process
+    pipeline, so the ``post-process`` action is self-contained after an install.
     """
 
-    return files("pd2") / "rscripts"
+    return files("phenodigm2") / "rscripts"
 
 
 def getPD2coredir(config):

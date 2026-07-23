@@ -2,8 +2,8 @@ import pytest
 import shutil
 from importlib.resources import as_file
 import sqlite3
-from pd2.tools import getBundledResourcesDir
-from pd2.dbmodels import (
+from phenodigm2.tools import getBundledResourcesDir
+from phenodigm2.dbmodels import (
     PhenodigmTable,
     PhenodigmSimpleGenerator,
     PhenodigmJoinGenerator,
@@ -22,7 +22,7 @@ from pd2.dbmodels import (
     ModelOntologyOntologyMapping,
     ModelAssociation,
 )
-from pd2.dbbuild import runDBBuild
+from phenodigm2.dbbuild import runDBBuild
 
 
 # Create a fixutre to serve as a database for some PhenodigmTable objects

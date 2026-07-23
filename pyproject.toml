@@ -18,8 +18,8 @@ dependencies = [
 ]
 
 [project.scripts]
-phenodigm2 = "pd2.cli:main"
-phenodigm = "pd2.cli:main"
+phenodigm2 = "phenodigm2.cli:main"
+phenodigm = "phenodigm2.cli:main"
 
 [dependency-groups]
 dev = [
@@ -27,7 +27,7 @@ dev = [
     "ruff>=0.3.0",
 ]
 
-# Flat (non-src) layout: the import package is the root-level pd2/ directory.
+# Flat (non-src) layout: the import package is the root-level phenodigm2/ directory.
 [tool.uv.build-backend]
-module-name = "pd2"
+module-name = "phenodigm2"
 module-root = ""

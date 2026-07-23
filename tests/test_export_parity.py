@@ -4,9 +4,9 @@ import json
 
 import polars as pl
 
-from pd2 import parquet, solrdata, solrlinks, solrsearch
-from pd2.document_definitions import materialize_row, normalize_document
-from pd2.documents import DATASET_SPECS, get_dataset_spec
+from phenodigm2 import parquet, solrdata, solrlinks, solrsearch
+from phenodigm2.document_definitions import materialize_row, normalize_document
+from phenodigm2.documents import DATASET_SPECS, get_dataset_spec
 from tests.parquet_test_support import canonical_rows
 
 
@@ -33,7 +33,7 @@ def test_solr_and_parquet_match_shared_producers(document_database, monkeypatch)
     def collect_post(url, data, headers):
         posted.extend(json.loads(data))
 
-    monkeypatch.setattr("pd2.solrcoremodels.requests.post", collect_post)
+    monkeypatch.setattr("phenodigm2.solrcoremodels.requests.post", collect_post)
     for document_type, wrapper in SOLR_WRAPPERS.items():
         posted.clear()
         wrapper(document_database)
@@ -65,7 +65,7 @@ def test_solr_payload_matches_parquet_bundle(document_database, monkeypatch):
     def collect_post(url, data, headers):
         posted.extend(json.loads(data))
 
-    monkeypatch.setattr("pd2.solrcoremodels.requests.post", collect_post)
+    monkeypatch.setattr("phenodigm2.solrcoremodels.requests.post", collect_post)
 
     for document_type, wrapper in SOLR_WRAPPERS.items():
         definition = get_dataset_spec(document_type).definition

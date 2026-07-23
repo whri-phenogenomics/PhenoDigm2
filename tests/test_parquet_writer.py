@@ -3,8 +3,8 @@
 import polars as pl
 import pytest
 
-from pd2.documents import get_dataset_spec
-from pd2.parquet import ParquetDatasetWriter, to_polars_schema
+from phenodigm2.documents import get_dataset_spec
+from phenodigm2.parquet import ParquetDatasetWriter, to_polars_schema
 
 
 def test_parquet_writer_multipart_types_and_unknown_fields(tmp_path):

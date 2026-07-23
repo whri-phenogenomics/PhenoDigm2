@@ -6,8 +6,8 @@ Tests the behaviour of phenodigm2.py download
 
 import pytest
 import os
-import pd2.prep as pd2prep
-from pd2.prep import fetchFromURL, fetchUsingXmlQuery, runDirPrep, runDownloads
+import phenodigm2.prep as pd2prep
+from phenodigm2.prep import fetchFromURL, fetchUsingXmlQuery, runDirPrep, runDownloads
 import gzip
 import json
 

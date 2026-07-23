@@ -1,5 +1,5 @@
 """
-Tests for contents of pd2.tools.py
+Tests for contents of phenodigm2.tools.py
 (functions with generic tools)
 
 @author: Diego Pava
@@ -10,7 +10,7 @@ from unittest.mock import patch, MagicMock
 import os
 from datetime import datetime
 import sqlite3
-from pd2.tools import (
+from phenodigm2.tools import (
     readHeader,
     time,
     matches,
@@ -49,7 +49,7 @@ def mock_datetime_now(monkeypatch):
         def now(cls):
             return datetime(2023, 6, 29)
 
-    monkeypatch.setattr("pd2.tools.datetime", TestDatetime)
+    monkeypatch.setattr("phenodigm2.tools.datetime", TestDatetime)
 
 
 # Test the time function returns expected time.
@@ -202,14 +202,14 @@ def test_runProcess():
 
 # from os.path import join, dirname
 # import unittest
-# from pd2 import tools as pd2tools
-# from pd2 import loaddiseases as pd2diseases
+# from phenodigm2 import tools as pd2tools
+# from phenodigm2 import loaddiseases as pd2diseases
 
 
 # s2c = pd2diseases.omimTitle
 
 # class ToolsTests(unittest.TestCase):
-#     """Test for pd2 tools."""
+#     """Test for phenodigm2 tools."""
 
 #     def setUp(self):
 #         """Setup for individual tests."""

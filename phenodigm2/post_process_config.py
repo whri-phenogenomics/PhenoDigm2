@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 # pydantic model to optionally override the bundled post-processing inputs.
 # The omim curation file and both R scripts ship inside the package
-# (pd2/resources, pd2/rscripts) and are used by default. Each optional path
+# (phenodigm2/resources, phenodigm2/rscripts) and are used by default. Each optional path
 # overrides a bundled copy, e.g. to supply a freshly curated omim file or run a
 # locally edited R script for a different R version.
 class PostProcessConfig(BaseModel):

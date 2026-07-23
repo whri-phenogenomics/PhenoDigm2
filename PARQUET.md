@@ -4,26 +4,40 @@ PhenoDigm2 can export the documents used by its Solr core as a portable
 Parquet bundle. The export reads only the completed SQLite database and does
 not require a running Solr server.
 
-```bash
-phenodigm2 parquet --db /path/to/build
+Shown **primarily** with the Python API (`PhenoDigm`), with the equivalent
+`phenodigm` CLI command alongside:
+
+```python
+from phenodigm2 import PhenoDigm
+
+PhenoDigm("/path/to/build").parquet()
 ```
 
-By default, this creates `/path/to/build/output/parquet`. Use `--parquet-dir` to
-choose another destination:
+```bash
+phenodigm parquet --db /path/to/build
+```
+
+By default, this creates `/path/to/build/output/parquet`. Use `parquet_dir=` (CLI
+`--parquet-dir`) to choose another destination:
+
+```python
+PhenoDigm("/path/to/build").parquet(parquet_dir="/path/to/phenodigm-parquet")
+```
 
 ```bash
-phenodigm2 parquet --db /path/to/build \
+phenodigm parquet --db /path/to/build \
   --parquet-dir /path/to/phenodigm-parquet
 ```
 
-An existing destination is never replaced unless `--overwrite` is supplied.
-The replacement is staged beside the destination and published only after all
-datasets and the manifest have been written successfully.
+An existing destination is never replaced unless `overwrite=True` (CLI
+`--overwrite`) is supplied. The replacement is staged beside the destination and
+published only after all datasets and the manifest have been written
+successfully.
 
 Solr and Parquet share two document-filtering options:
-`--output_min_ontology_ontology_score` thresholds `sqrt(simJ * ic)` mappings,
-and `--output_min_disease_model_2d_score` thresholds the combined average/max
-raw score used for computed disease-model associations.
+`output_min_ontology_ontology_score` thresholds `sqrt(simJ * ic)` mappings, and
+`output_min_disease_model_2d_score` thresholds the combined average/max raw score
+used for computed disease-model associations (CLI: the `--output_min_*` flags).
 
 ## Shared document pipeline
 
@@ -86,7 +100,7 @@ and relative part paths.
 ## Adding another output writer
 
 Document schemas use the storage-neutral `FieldKind` values defined in
-`pd2/document_definitions.py`. Each output writer provides a complete mapping
+`phenodigm2/document_definitions.py`. Each output writer provides a complete mapping
 from those logical kinds to its own native types; for example, the Parquet
 adapter maps `FieldKind.STRING` to `polars.String`. A new writer should add its
 own adapter rather than putting writer-specific types in the shared schema.

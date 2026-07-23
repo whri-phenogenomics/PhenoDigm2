@@ -2,7 +2,7 @@
 
 import pytest
 
-from pd2 import cli
+from phenodigm2 import cli
 
 
 def test_parquet_cli_options_and_dispatch_without_solr_or_prep(tmp_path, monkeypatch):

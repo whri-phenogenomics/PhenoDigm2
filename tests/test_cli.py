@@ -2,7 +2,7 @@
 
 import pytest
 
-from pd2 import cli
+from phenodigm2 import cli
 
 
 def assert_initialized(build_dir):

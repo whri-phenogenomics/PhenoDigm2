@@ -45,27 +45,37 @@ Important paths:
 
 - `pyproject.toml`: package metadata, Python requirement, dependencies, and CLI
   entry points.
-- `pd2/`: main Python package.
-- `pd2/cli.py`: implementation behind the `phenodigm` command.
-- `pd2/resources/`: resources bundled into the wheel and seeded into new build
+- `phenodigm2/`: main Python package.
+- `phenodigm2/cli.py`: implementation behind the `phenodigm` command.
+- `phenodigm2/api.py`: the `PhenoDigm` class — the primary programmatic Python API over the pipeline stages.
+- `phenodigm2/resources/`: resources bundled into the wheel and seeded into new build
   directories.
-- `pd2/resources/dc-solr-7.5.yml`: bundled optional Solr Compose template.
-- `pd2/rscripts/`: R scripts bundled for the `post-process` workflow.
+- `phenodigm2/resources/dc-solr-7.5.yml`: bundled optional Solr Compose template.
+- `phenodigm2/rscripts/`: R scripts bundled for the `post-process` workflow.
 - `tests/`: pytest suite.
 - `post_process_config.yaml`: optional post-processing overrides.
 - `BUILD.md`: canonical database-build workflow.
 - `IMPC_RELEASE.md`: operational IMPC release checklist.
 - `PARQUET.md` and `SOLR.md`: output-specific documentation.
 
-The supported CLI entry point is `phenodigm`, exposed by the installed package:
+PhenoDigm2 is driven **primarily** as a Python library via the `PhenoDigm` class;
+an equivalent CLI is also available.
+
+```python
+from phenodigm2 import PhenoDigm
+pd = PhenoDigm("vTODAY")
+pd.download(); pd.build(); pd.score(fast=True); pd.parquet()
+```
+
+The equivalent CLI entry point is `phenodigm`, exposed by the installed package:
 
 ```bash
 uv run phenodigm --help
 ```
 
-Do not introduce new documentation or workflows based on
-`python3 phenodigm2.py ...`. The `phenodigm2` console alias and root wrapper may
-remain for compatibility, but `uv run phenodigm ...` is canonical.
+The old `python3 phenodigm2.py ...` root wrapper has been removed. Drive the
+pipeline through the `PhenoDigm` Python API (canonical) or the `phenodigm` /
+`phenodigm2` console command; do not reintroduce a root wrapper script.
 
 Owltools is no longer supported. Ontology mappings come from downloaded
 Phenio/Semsimian files and are processed by the `ontology_mapping` action. Do
@@ -182,7 +192,7 @@ explicit user intent. Read `SOLR.md` before changing Solr behavior.
 - Keep generated databases, release bundles, Parquet outputs, Solr cores,
   caches, wheels, and temporary build artifacts out of commits unless the user
   explicitly asks otherwise.
-- Add package runtime assets under `pd2/resources/`, not only at repository
+- Add package runtime assets under `phenodigm2/resources/`, not only at repository
   root, and verify important assets are included in a built wheel.
 - Use temporary directories for output workflow tests. Do not run a real Solr
   server or download release datasets merely to test path preparation.

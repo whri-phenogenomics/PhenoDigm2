@@ -8,7 +8,7 @@ import pytest
 import sqlite3
 import json
 import os
-from pd2.dbbuild import PhenoDigmDB, runDBBuild, runDBIndexing
+from phenodigm2.dbbuild import PhenoDigmDB, runDBBuild, runDBIndexing
 
 
 # Test PhenoDigmDB's maketable and makeindexes methods.

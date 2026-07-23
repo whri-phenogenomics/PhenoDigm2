@@ -1,11 +1,11 @@
 """
-Tests for contents of pd2/scoring.py
+Tests for contents of phenodigm2/scoring.py
 (Classes to produce scores)
 """
 
 import unittest
-from pd2.loadmodels import load_life_stages
-from pd2.tools import getBundledResourcesDir
+from phenodigm2.loadmodels import load_life_stages
+from phenodigm2.tools import getBundledResourcesDir
 
 life_stage_file = str(getBundledResourcesDir() / "annotations" / "impc_life_stages.csv")
 

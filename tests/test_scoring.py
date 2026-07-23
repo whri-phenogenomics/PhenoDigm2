@@ -1,12 +1,12 @@
 """
-Tests for contents of pd2/scoring.py
+Tests for contents of phenodigm2/scoring.py
 (Classes to produce scores)
 """
 
 from os.path import join, dirname
 import unittest
-from pd2 import scoring
-from pd2 import dss
+from phenodigm2 import scoring
+from phenodigm2 import dss
 
 
 class AvgMaxScoreTests(unittest.TestCase):

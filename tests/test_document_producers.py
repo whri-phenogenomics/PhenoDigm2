@@ -4,14 +4,14 @@ import sqlite3
 
 import polars as pl
 
-from pd2 import documents
-from pd2.document_definitions import FieldKind, materialize_row, normalize_document
-from pd2.documents import (
+from phenodigm2 import documents
+from phenodigm2.document_definitions import FieldKind, materialize_row, normalize_document
+from phenodigm2.documents import (
     DATASET_SPECS,
     DISEASE_SEARCH_FLAG_DEFAULTS,
     get_dataset_spec,
 )
-from pd2.parquet import to_polars_schema
+from phenodigm2.parquet import to_polars_schema
 
 
 def test_document_registry_and_normalization():

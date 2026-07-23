@@ -43,6 +43,27 @@ instead of release data.
 
 ## Build the release
 
+The release build is driven **primarily** from Python via the `PhenoDigm` class;
+the numbered steps below are the detailed CLI equivalents, kept for their
+per-step validation guidance. The whole sequence in Python:
+
+```python
+from phenodigm2 import PhenoDigm
+
+pd = PhenoDigm("vTODAY")
+pd.init()                     # step 1 (then update dependencies.json, step 2)
+pd.download()                 # step 3 (validate data_raw afterwards)
+pd.build()                    # step 4
+pd.ontology_mapping()         # step 5  (ontology_mapping_min_ic=<IC> to tune)
+pd.score(fast=True, cores=4)  # step 6
+pd.index()                    # step 7
+pd.parquet()                  # step 8  (overwrite=True to replace an existing bundle)
+```
+
+Set `OMIM_API_KEY` in the environment before `pd.download()`, exactly as for the
+CLI. See [`examples/airflow/phenodigm_dag.py`](examples/airflow/phenodigm_dag.py)
+for the same pipeline wired as an Airflow DAG.
+
 ### 1. Initialize
 
 ```bash
@@ -76,7 +97,7 @@ uvx zenodo_get -w zenodo_urls 18474575
 ```
 
 Review all entries in the release copy of `dependencies.json` before the
-download. Updating the source file under `pd2/resources` is unnecessary for a
+download. Updating the source file under `phenodigm2/resources` is unnecessary for a
 one-off release and would not change an already initialized bundle.
 
 ### 3. Download and validate resources
