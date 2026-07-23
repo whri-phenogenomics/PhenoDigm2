@@ -144,7 +144,6 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
     { name = "requests" },
-    { name = "urllib3" },
 ]
 
 [package.dev-dependencies]
@@ -160,7 +159,6 @@ requires-dist = [
     { name = "pydantic", specifier = ">2.10" },
     { name = "pyyaml", specifier = ">6.0" },
     { name = "requests", specifier = ">=2.32.5" },
-    { name = "urllib3", specifier = "<2.0" },
 ]
 
 [package.metadata.requires-dev]
