@@ -130,12 +130,12 @@ def _write_ensembl_orthologs(annodir, headersdir) -> None:
             .unique()
         )
         human_mouse_mapping_path = Path(annodir, "human_mouse_mapping.txt.gz")
-        human_mouse.write_csv(
-            human_mouse_mapping_path,
-            separator="\t",
-            compression="gzip",
-            include_header=False,
-        )
+        with gzip.open(human_mouse_mapping_path, "wb") as mapping_file:
+            human_mouse.write_csv(
+                mapping_file,
+                separator="\t",
+                include_header=False,
+            )
         pd2tools.log("Complete", 3)
 
     except Exception as e:
