@@ -246,9 +246,7 @@ portal and PheVal benchmarking. It requires at least one core with 32 GB RAM and
 a compatible R environment.
 
 The OMIM curation file and bundled R scripts are copied into the release at run
-time, so a standard run needs no extra configuration. To override a bundled
-input, copy `post_process_config.yaml` into `vTODAY`, edit the relevant path,
-then run:
+time, so the workflow needs no extra resource-path configuration:
 
 ```bash
 module load R/4.4.1

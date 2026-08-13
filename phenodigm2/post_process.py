@@ -14,7 +14,6 @@ import polars as pl
 import requests
 
 from . import tools as pd2tools
-from . import post_process_config as pd2PostProcConfig
 
 
 _SQLITE_TO_POLARS_TYPE = {
@@ -272,53 +271,25 @@ def export_tables(config):
         frame.sink_parquet(output_file_path, compression="zstd")
 
 
-def _copy_input(override, bundled, dest_dir):
-    """Copy a post-processing input (omim file or R script) into dest_dir.
-
-    Uses the external override path when the yaml provides one, otherwise the
-    copy bundled in the package (extracted to a real path via ``as_file``). The
-    file is copied into the --db bundle so it can be edited there without
-    touching the installed package.
-    """
-    if override is not None:
-        shutil.copy2(override, dest_dir)
-    else:
-        with as_file(bundled) as src:
-            shutil.copy2(src, dest_dir)
+def _copy_bundled_input(bundled, dest_dir):
+    """Copy a bundled post-processing input into the build directory."""
+    with as_file(bundled) as src:
+        shutil.copy2(src, dest_dir)
 
 
 def relocate_external_resources(config):
-    rootdir = Path(config.db).resolve()
-
-    # Set the target path to extract using post_process_paths
     output_path = post_process_paths(config)
-
-    # Load overrides from the yaml if present; otherwise use bundled defaults.
-    config_file = Path(rootdir, "post_process_config.yaml")
-    if config_file.exists():
-        post_proc_paths = pd2PostProcConfig.load_config(config_file)
-    else:
-        post_proc_paths = pd2PostProcConfig.PostProcessConfig()
-
-    # The omim curation file and both R scripts default to the copies bundled in
-    # the package; the yaml may override any of them with an external path (e.g.
-    # a freshly curated omim file or a locally edited script).
-
-    # TODO: These three now live inside the bundle. No need for config file to find their path
     resources = pd2tools.getBundledResourcesDir()
     rscripts = pd2tools.getBundledRScriptsDir()
-    _copy_input(
-        post_proc_paths.omim_curation_path,
+    _copy_bundled_input(
         resources / "omim_curation.tsv",
         output_path["data_aux"],
     )
-    _copy_input(
-        post_proc_paths.main_r_script_path,
+    _copy_bundled_input(
         rscripts / "post_processing_DM_pipeline.R",
         output_path["scripts"],
     )
-    _copy_input(
-        post_proc_paths.hgnc_symbol_checker_script_path,
+    _copy_bundled_input(
         rscripts / "auxiliary" / "hgnc_symbol_checker.R",
         output_path["scripts_aux"],
     )

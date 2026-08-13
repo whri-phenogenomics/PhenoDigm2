@@ -53,7 +53,6 @@ Important paths:
 - `phenodigm2/resources/dc-solr-7.5.yml`: bundled optional Solr Compose template.
 - `phenodigm2/rscripts/`: R scripts bundled for the `post-process` workflow.
 - `tests/`: pytest suite.
-- `post_process_config.yaml`: optional post-processing overrides.
 - `BUILD.md`: canonical database-build workflow.
 - `IMPC_RELEASE.md`: operational IMPC release checklist.
 - `PARQUET.md` and `SOLR.md`: output-specific documentation.
