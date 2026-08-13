@@ -241,7 +241,7 @@ docker compose -f vTODAY/output/solr/dc-solr-7.5.yml down
 
 ## Optional: post-processing analysis
 
-The `post-process` Luigi workflow produces outputs for the disease models
+The `post-process` workflow produces outputs for the disease models
 portal and PheVal benchmarking. It requires at least one core with 32 GB RAM and
 a compatible R environment.
 

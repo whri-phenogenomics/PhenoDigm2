@@ -9,7 +9,6 @@ description = "Build phenotype annotation databases and compute PhenoDigm2 score
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "luigi>=3.6.0",
     "polars>=1.32.3",
     "pydantic>2.10",
     "pyyaml>6.0",

@@ -112,8 +112,8 @@ uv run phenodigm status --db PATH
 
 When changing behavior, run the narrowest relevant tests first. Run a broader
 pytest selection when shared producers, CLI dispatch, resources, database
-models, or output adapters are affected. Keep Luigi and dependency deprecation
-warnings distinct from actual test failures.
+models, or output adapters are affected. Keep dependency deprecation warnings
+distinct from actual test failures.
 
 ## Canonical Build and Release Workflow
 

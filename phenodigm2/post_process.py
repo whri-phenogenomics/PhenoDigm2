@@ -4,17 +4,14 @@ This involves prodcing necessary files for data analysis of each DR and the Dise
 By: Diego Pava"""
 
 import json
-import os
 import shutil
 import subprocess
 from importlib.resources import as_file
 from pathlib import Path
 from typing import Dict
 
-import luigi
 import polars as pl
 import requests
-from luigi import LocalTarget, Task
 
 from . import tools as pd2tools
 from . import post_process_config as pd2PostProcConfig
@@ -50,22 +47,85 @@ def _get_post_proc_dir(config) -> Path:
     return Path(rootdir, "post_processing")
 
 
-def _get_pipeline_status_dir(config) -> None:
+def _get_pipeline_status_dir(config) -> Path:
     post_proc_dir = _get_post_proc_dir(config)
     return Path(post_proc_dir, "pipeline_status")
 
 
+def _run_post_process_step(
+    config,
+    marker_name,
+    action,
+    start_message,
+    success_message,
+    marker_message,
+    failure_message,
+):
+    """Run one idempotent pipeline step and record its successful completion."""
+    marker = _get_pipeline_status_dir(config) / marker_name
+    if marker.exists():
+        pd2tools.log(f"Skipping completed post-processing step: {marker_name}")
+        return
+
+    pd2tools.log(start_message)
+    try:
+        action(config)
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.write_text(marker_message, encoding="utf-8")
+        pd2tools.log(success_message)
+    except Exception as error:
+        pd2tools.log(f"{failure_message}: {error}")
+        raise RuntimeError(f"{failure_message} - check logs for details") from error
+
+
 def run_post_process(config):
+    """Run the post-processing stages sequentially without an external scheduler."""
     pd2tools.log("Running post processing pipeline")
-
-    # Order of tasks right now is:
-    # 1. CreatePostProcessDirs
-    # 2a. DownloadResources
-    # 2b. ExportTables
-    # 3. RelocateExternalResources
-
-    tasks = [DownloadResources(config=config), RunRPhenodigmAnalysis(config=config)]
-    luigi.build(tasks, local_scheduler=True)
+    _run_post_process_step(
+        config,
+        ".directories_created",
+        create_post_process_dirs,
+        "Creating post-processing directories...",
+        "Created post-processing directories successfully.",
+        "Directories created successfully.",
+        "Creating directories failed",
+    )
+    _run_post_process_step(
+        config,
+        ".files_downloaded",
+        download_resources,
+        "Downloading post_process resources...",
+        "Downloaded post-processing files successfully.",
+        "Files downloaded successfully.",
+        "Downloading resources failed",
+    )
+    _run_post_process_step(
+        config,
+        ".tables_created",
+        export_tables,
+        "Exporting tables:",
+        "Exported tables successfully.",
+        "Tables exported successfully.",
+        "Exporting tables failed",
+    )
+    _run_post_process_step(
+        config,
+        ".resources_relocated",
+        relocate_external_resources,
+        "Relocating external resources...",
+        "Relocated external resources successfully.",
+        "Relocated external resources successfully.",
+        "External resources relocation failed",
+    )
+    _run_post_process_step(
+        config,
+        ".post_processing_analysis_complete",
+        run_post_processing_analysis,
+        "Running post processing analysis...",
+        "Post processing analysis successful.",
+        "Post processing analysis successful.",
+        "Running post processing analysis failed",
+    )
 
 
 def download_data(url, filename):
@@ -277,159 +337,20 @@ def run_post_processing_analysis(config):
     subprocess.run(command, text=True, check=True)
 
 
-# Luigi tasks
-class CreatePostProcessDirs(Task):
-    config = luigi.Parameter()
-
-    def output(self):
-        post_proc_dir = _get_post_proc_dir(self.config)
-        return LocalTarget(
-            Path(post_proc_dir, "pipeline_status", ".directories_created")
-        )
-
-    def run(self):
-        paths = post_process_paths(self.config)
-        directories = [v for _, v in paths.items()]
-
-        try:
-            # Create all project directories
-            for dir_path in directories:
-                os.makedirs(dir_path, exist_ok=True)
-                pd2tools.log(f"Created directory: {dir_path}")
-
-            # Create the marker file to indicate successful completion
-            with self.output().open("w") as f:
-                f.write("Directories created successfully.")
-            pd2tools.log("Created post-processing directories successfully.")
-
-        except Exception as e:
-            pd2tools.log(f"Error creating directories: {e}")
-            raise RuntimeError(
-                "Creating directories failed  - check logs error for details"
-            ) from e
-
-        # Create a pipeline_status dir
-        os.makedirs(_get_pipeline_status_dir(self.config), exist_ok=True)
+def create_post_process_dirs(config):
+    """Create all directories required by the post-processing workflow."""
+    for directory in post_process_paths(config).values():
+        directory.mkdir(parents=True, exist_ok=True)
+        pd2tools.log(f"Created directory: {directory}")
 
 
-class DownloadResources(Task):
-    config = luigi.Parameter()
+def download_resources(config):
+    """Download the external inputs required by post-processing."""
+    downloads = downloads_dict(impc_data_release="latest")
+    download_paths = post_process_paths(config)
+    for values in downloads.values():
+        target_path = download_paths[values["targetdir"]]
+        download_data(values["url"], target_path / values["filename"])
 
-    def requires(self):
-        return CreatePostProcessDirs(config=self.config)
-
-    def output(self):
-        post_proc_dir = _get_post_proc_dir(self.config)
-        return LocalTarget(Path(post_proc_dir, "pipeline_status", ".files_downloaded"))
-
-    def run(self):
-        # Download data
-        pd2tools.log("Downloading post_process resources...")
-        try:
-            downloads = downloads_dict(impc_data_release="latest")
-            download_paths = post_process_paths(self.config)
-            for _, values in downloads.items():
-                url = values["url"]
-                filename = values["filename"]
-                targetdir = values["targetdir"]
-                target_path = download_paths[targetdir]
-                file_path = Path(target_path, filename)
-
-                download_data(url, file_path)
-
-            # Create the marker file to indicate successful completion
-            with self.output().open("w") as f:
-                f.write("Files downloaded successfully.")
-            pd2tools.log("Downloaded post-processing files successfully.")
-
-        except Exception as e:
-            pd2tools.log(f"Error downloading resources: {e}")
-            raise RuntimeError(
-                "Downloading resources failed - check logs error for details"
-            ) from e
-
-        # NOTE: For now we will download everything here because the versions of the files are to remain flexible and cannot be determined at the begining of the build
-
-
-class ExportTables(Task):
-    config = luigi.Parameter()
-
-    def requires(self):
-        return CreatePostProcessDirs(config=self.config)
-
-    def output(self):
-        post_proc_dir = _get_post_proc_dir(self.config)
-        return LocalTarget(Path(post_proc_dir, "pipeline_status", ".tables_created"))
-
-    def run(self):
-        pd2tools.log("Exporting tables:")
-        try:
-            export_tables(self.config)
-            pd2tools.log("Exported tables successfully.")
-            # Create the marker file to indicate successful completion
-            with self.output().open("w") as f:
-                f.write("Tables exported successfully.")
-
-        except Exception as e:
-            pd2tools.log(f"Error exporting tables: {e}")
-            raise RuntimeError(
-                "Exporting tables failed - check logs error for details"
-            ) from e
-
-
-# Task to find and copy to current bundle:
-# omim_curation.tsv
-# R scripts
-# Auxiliary R scripts
-class RelocateExternalResources(Task):
-    config = luigi.Parameter()
-
-    def requires(self):
-        return ExportTables(config=self.config)
-
-    def output(self):
-        post_proc_dir = _get_post_proc_dir(self.config)
-        return LocalTarget(
-            Path(post_proc_dir, "pipeline_status", ".resources_relocated")
-        )
-
-    def run(self):
-        pd2tools.log("Relocating external resources...")
-        try:
-            relocate_external_resources(self.config)
-            pd2tools.log("Relocated external resources successfully.")
-            with self.output().open("w") as f:
-                f.write("Relocated external resources successfully.")
-
-        except Exception as e:
-            pd2tools.log(f"Error relocating external resources: {e}")
-            raise RuntimeError(
-                "External resources relocation failed - check logs error for details"
-            ) from e
-
-
-class RunRPhenodigmAnalysis(Task):
-    config = luigi.Parameter()
-
-    def requires(self):
-        return RelocateExternalResources(config=self.config)
-
-    def output(self):
-        post_proc_dir = _get_post_proc_dir(self.config)
-        return LocalTarget(
-            Path(post_proc_dir, "pipeline_status", ".post_processing_analysis_complete")
-        )
-
-    def run(self):
-        # Run R script with post processing analysis, DM portal files and benchmarking files
-        pd2tools.log("Running post processing analysis...")
-        try:
-            run_post_processing_analysis(self.config)
-            pd2tools.log("Post processing analysis successful.")
-            with self.output().open("w") as f:
-                f.write("Post processing analysis successful.")
-        except Exception as e:
-            pd2tools.log(f"Error running post processing analysis: {e}")
-            raise RuntimeError(
-                "Running post processing analysis failed - check logs error for details"
-            ) from e
+    # The input versions intentionally remain flexible and cannot all be
+    # determined when the main database build starts.
