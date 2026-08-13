@@ -63,13 +63,12 @@ log_event <- function(...) {
 
 # import data -------------------------------------------------------------
 
-model_genotype <- fread("./data/phenodigm/model_genotype.tsv.gz") %>% 
-  # model_genotype <-read_parquet("./data/phenodigm/model_genotype.parquet") %>%
+model_genotype <- read_parquet("./data/phenodigm/model_genotype.parquet") %>%
   select(id,gene_id) %>%
   rename(mgi_id = gene_id)
 
 
-model <- fread("./data/phenodigm/model.tsv.gz") %>%
+model <- read_parquet("./data/phenodigm/model.parquet") %>%
   inner_join(model_genotype)
 
 hgnc <- protein_coding_genes %>%
@@ -84,13 +83,12 @@ hm_ortho_symbol <- read_delim("./data/auxiliary/one_to_one_orthologs.tsv") %>%
          mgi_id = `Mgi Gene Acc Id`) %>%
   as.data.frame()
 
-disease <- fread("./data/phenodigm/disease.tsv.gz") %>%
+disease <- read_parquet("./data/phenodigm/disease.parquet") %>%
   select(id,term) %>%
   dplyr::rename(disorder_id = id, disorder_name = term) 
 
 
-gene_disease <- read_delim("./data/phenodigm/disease_gene_mapping.tsv.gz", 
-                           delim = "\t", col_names = TRUE) 
+gene_disease <- read_parquet("./data/phenodigm/disease_gene_mapping.parquet")
 
 # Log number of gene disease entries
 # put(paste0("Gene disease table: ",length(unique(gene_disease$match))))
@@ -99,8 +97,7 @@ log_event(
   gene_disease_table = length(unique(gene_disease$match))
   )
 
-gene_disease <- read_delim("./data/phenodigm/disease_gene_mapping.tsv.gz", 
-                           delim = "\t", col_names = TRUE) %>%
+gene_disease <- read_parquet("./data/phenodigm/disease_gene_mapping.parquet") %>%
   filter(source !="MGI") %>%
   select(query,match) %>%
   right_join(disease,by =c("query" = "disorder_id")) %>%
@@ -324,7 +321,9 @@ log_event(disease_genes_orthologs_impc_models_with_hp_and_mp = dim(genes_mouse_h
 # phenodigm scores --------------------------------------------------------
 
 ### genes with phenodigm match
-model_disease_omim_score_no0 <- fread("./data/phenodigm/disease_model_association_omim_impc.tsv.gz") %>%
+model_disease_omim_score_no0 <- read_parquet(
+  "./data/phenodigm/disease_model_association_omim_impc.parquet"
+) %>%
   mutate(score =(score_avg_norm + score_max_norm)/2) %>%
   filter(score > 0) %>%
   inner_join(model, by = c("match" = "id")) %>%
@@ -339,8 +338,9 @@ model_disease_omim_score_no0 <- fread("./data/phenodigm/disease_model_associatio
 
 
 
-model_disease_orphanet_score_no0 <- read_delim("./data/phenodigm/disease_model_association_orphanet_impc.tsv.gz", 
-                                               delim = "\t", col_names = TRUE) %>%
+model_disease_orphanet_score_no0 <- read_parquet(
+  "./data/phenodigm/disease_model_association_orphanet_impc.parquet"
+) %>%
   mutate(score =(score_avg_norm + score_max_norm)/2) %>%
   filter(score > 0) %>%
   inner_join(model, by = c("match" = "id")) %>%
@@ -632,7 +632,9 @@ lethal_humans_check = lethal_humans %>%
 # Check how manny genes linked to these 
 # How many have a score over 40
 ####################################################################
-model_no0 <- fread("./data/phenodigm/disease_model_association_omim_impc.tsv.gz") %>%
+model_no0 <- read_parquet(
+  "./data/phenodigm/disease_model_association_omim_impc.parquet"
+) %>%
   mutate(score =(score_avg_norm + score_max_norm)/2) %>%
   filter(score > 0) %>%
   inner_join(model, by = c("match" = "id")) %>%
@@ -750,8 +752,10 @@ impc_match = genes_pheno_hpo_nomatch_match %>%
   filter(phenodigm_match == "y")
 
 
-model_nonimpc_disease_omim_score_no0 <- open_dataset("./data/phenodigm/disease_model_association_omim_nonimpc.tsv.gz", 
-                                                   format = "tsv", col_names = TRUE) %>%
+model_nonimpc_disease_omim_score_no0 <- open_dataset(
+  "./data/phenodigm/disease_model_association_omim_nonimpc.parquet",
+  format = "parquet"
+) %>%
   mutate(score =(score_avg_norm + score_max_norm)/2) %>%
   filter(score > 0) %>%
   inner_join(model, by = c("match" = "id"),relationship = "many-to-many") %>%
@@ -765,9 +769,10 @@ model_nonimpc_disease_omim_score_no0 <- open_dataset("./data/phenodigm/disease_m
   collect()
 
 
-model_nonimpc_disease_orphanet_score_no0 <- open_dataset("./data/phenodigm/disease_model_association_orphanet_nonimpc.tsv.gz", 
-                                                       format= "tsv", 
-                                                       col_names = TRUE) %>%
+model_nonimpc_disease_orphanet_score_no0 <- open_dataset(
+  "./data/phenodigm/disease_model_association_orphanet_nonimpc.parquet",
+  format = "parquet"
+) %>%
   mutate(score =(score_avg_norm + score_max_norm)/2) %>%
   filter(score > 0) %>%
   inner_join(model, by = c("match" = "id"),relationship = "many-to-many") %>%
@@ -942,8 +947,12 @@ omim_diseases_with_impc_genes <- gene_disease %>%
 # Read disease_model_association files
 # 1. omim-all models
 # 2. omim-impc models-only
-dma_omim <- fread("./data/phenodigm/disease_model_association_omim.tsv.gz")
-dma_impc_omim <- fread("./data/phenodigm/disease_model_association_omim_impc.tsv.gz")
+dma_omim <- read_parquet(
+  "./data/phenodigm/disease_model_association_omim.parquet"
+)
+dma_impc_omim <- read_parquet(
+  "./data/phenodigm/disease_model_association_omim_impc.parquet"
+)
 
 
 # 1  Select scores for all models

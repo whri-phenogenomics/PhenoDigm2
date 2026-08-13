@@ -3,19 +3,29 @@ This involves prodcing necessary files for data analysis of each DR and the Dise
 
 By: Diego Pava"""
 
-from . import tools as pd2tools
-import luigi
-from luigi import Task, LocalTarget
+import json
 import os
-from importlib.resources import as_file
-from pathlib import Path
-import requests
-from typing import Dict
-from . import export as pd2export
-from . import post_process_config as pd2PostProcConfig
-import gzip
 import shutil
 import subprocess
+from importlib.resources import as_file
+from pathlib import Path
+from typing import Dict
+
+import luigi
+import polars as pl
+import requests
+from luigi import LocalTarget, Task
+
+from . import tools as pd2tools
+from . import post_process_config as pd2PostProcConfig
+
+
+_SQLITE_TO_POLARS_TYPE = {
+    "INT": pl.Int64,
+    "INTEGER": pl.Int64,
+    "REAL": pl.Float64,
+    "TEXT": pl.String,
+}
 
 
 # Contants with paths to download data
@@ -86,23 +96,26 @@ def downloads_dict(impc_data_release: str = "latest"):
             "filename": "one_to_one_orthologs.tsv",
             "targetdir": "data_aux",
         },
+        # TODO: Instead of downloading Move from vTODAY/data_raw/annotations/to where it's needed OR create a symlink (preferable)
         "impc_geno_pheno_assertions": {
             "url": f"http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/{impc_data_release}/results/genotype-phenotype-assertions-ALL.csv.gz",
             "filename": "genotype-phenotype-assertions-ALL.csv.gz",
             "targetdir": "impc",
         },
+        # NOTE: In the future, in airflow, this might be available locally.
         "impc_viability": {
             "url": f"http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/{impc_data_release}/results/viability.csv.gz",
             "filename": "viability.csv.gz",
             "targetdir": "impc",
         },
+        # TODO: Instead of downloading Move from vTODAY/data_raw/annotations/to where it's needed OR create a symlink (preferable)
         "impc_stat_result": {
             "url": f"http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/{impc_data_release}/results/statistical-results-ALL.csv.gz",
             "filename": "statistical-results-ALL.csv.gz",
             "targetdir": "impc",
         },
         "hpo_gene_to_pheno": {
-            "url": "https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2026-02-16/genes_to_phenotype.txt",
+            "url": "https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2026-06-23/genes_to_phenotype.txt",
             "filename": "genes_to_phenotype.txt",
             "targetdir": "hpo",
         },
@@ -111,12 +124,34 @@ def downloads_dict(impc_data_release: str = "latest"):
 
 
 # Function to extract the tables from the phenodigm database
-def export_tables(config):
-    # Extract the base tables
+def _read_table(config, table, table_config, where=""):
+    """Read one database table into a typed Polars LazyFrame."""
+    fields = [field.split() for field in table_config["fields"]]
+    columns = [field[0] for field in fields]
+    schema = {
+        column: _SQLITE_TO_POLARS_TYPE[sql_type.upper()]
+        for column, sql_type, *_ in fields
+    }
+    query = f"SELECT {', '.join(columns)} FROM {table}"
+    if where:
+        query += f" WHERE {where}"
 
-    # set the target path to extract using post_process_paths
+    connection = pd2tools.getDBconn(config.dbfile)
+    try:
+        return pl.read_database(
+            query=query, connection=connection, schema_overrides=schema
+        ).lazy()
+    finally:
+        connection.close()
+
+
+def export_tables(config):
+    """Export the post-processing database tables as Parquet files."""
     output_path = post_process_paths(config)["phenodigm"]
-    # List of tables to extract
+    _, _, resources_dir, _ = pd2tools.getPD2dirs(config)
+    with Path(resources_dir, "db_schema.json").open(encoding="utf-8") as schema_file:
+        db_schema = json.load(schema_file)
+
     tables = [
         "model",
         "model_genotype",
@@ -128,18 +163,15 @@ def export_tables(config):
     # Iterate over tables to export
     pd2tools.log("Exporting standard tables...")
     for table in tables:
-        output_file_path = Path(f"{output_path}/{table}.tsv.gz")
+        output_file_path = output_path / f"{table}.parquet"
 
         # Skip if the file already exists
         if output_file_path.exists():
-            pd2tools.log(f"Skipping table: {table}.tsv.gz (already exists)")
+            pd2tools.log(f"Skipping table: {table}.parquet (already exists)")
             continue
-        pd2tools.log(f"Exporting table: {table}.tsv.gz")
-        config.table = table
-        temp_table = pd2export.return_export_tables(config)
-        # Use gzip for compression
-        with gzip.open(output_file_path, "wt") as f_out:
-            f_out.write(temp_table)
+        pd2tools.log(f"Exporting table: {table}.parquet")
+        frame = _read_table(config, table, db_schema[table])
+        frame.sink_parquet(output_file_path, compression="zstd")
 
     # Extract the conditional tables
     pd2tools.log("Extracting conditional tables...")
@@ -165,17 +197,19 @@ def export_tables(config):
     ]
 
     for cond, filename in zip(conditions, filenames):
-        output_file_path = Path(f"{output_path}/{filename}.tsv.gz")
+        output_file_path = output_path / f"{filename}.parquet"
         # Skip if the file already exists
         if output_file_path.exists():
-            pd2tools.log(f"Skipping table: {filename}.tsv.gz (already exists)")
+            pd2tools.log(f"Skipping table: {filename}.parquet (already exists)")
             continue
-        pd2tools.log(f"Exporting table: {filename}.tsv.gz")
-        config.table = "disease_model_association"
-        config.where = cond
-        temp_table = pd2export.return_export_tables(config)
-        with gzip.open(output_file_path, "wt") as f_out:
-            f_out.write(temp_table)
+        pd2tools.log(f"Exporting table: {filename}.parquet")
+        frame = _read_table(
+            config,
+            "disease_model_association",
+            db_schema["disease_model_association"],
+            where=cond,
+        )
+        frame.sink_parquet(output_file_path, compression="zstd")
 
 
 def _copy_input(override, bundled, dest_dir):
@@ -209,6 +243,8 @@ def relocate_external_resources(config):
     # The omim curation file and both R scripts default to the copies bundled in
     # the package; the yaml may override any of them with an external path (e.g.
     # a freshly curated omim file or a locally edited script).
+
+    # TODO: These three now live inside the bundle. No need for config file to find their path
     resources = pd2tools.getBundledResourcesDir()
     rscripts = pd2tools.getBundledRScriptsDir()
     _copy_input(
