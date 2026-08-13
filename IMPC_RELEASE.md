@@ -257,3 +257,17 @@ module load R/4.4.1
 export R_LIBS_USER=/data/WHRI-Phenogenomics/projects/PhenoDigm2/post_processing_dependencies/r_lib_paths/R/x86_64-pc-linux-gnu-library/4.4.1
 uv run phenodigm post-process --db vTODAY
 ```
+
+To write only the two PheVal benchmarking Parquet files, use the independent
+Polars path. This skips the R portal analysis and downloads only the orthology
+resource it needs (unless that file is already present):
+
+```bash
+uv run phenodigm post-process --benchmark-only --db vTODAY
+```
+
+The equivalent Python API call is:
+
+```python
+PhenoDigm("vTODAY").post_process(benchmark_only=True)
+```

@@ -77,6 +77,15 @@ def build_parser():
         help="Write extra output to stdout",
         default=False,
     )
+    parser.add_argument(
+        "--benchmark-only",
+        action="store_true",
+        help=(
+            "With post-process, write only the PheVal benchmarking Parquet "
+            "files using Polars"
+        ),
+        default=False,
+    )
 
     # for "export"
     parser.add_argument(

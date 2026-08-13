@@ -13,6 +13,7 @@ from typing import Dict
 import polars as pl
 import requests
 
+from . import benchmark
 from . import tools as pd2tools
 
 
@@ -79,6 +80,10 @@ def _run_post_process_step(
 
 def run_post_process(config):
     """Run the post-processing stages sequentially without an external scheduler."""
+    if getattr(config, "benchmark_only", False):
+        run_benchmark_only(config)
+        return
+
     pd2tools.log("Running post processing pipeline")
     _run_post_process_step(
         config,
@@ -124,6 +129,38 @@ def run_post_process(config):
         "Post processing analysis successful.",
         "Post processing analysis successful.",
         "Running post processing analysis failed",
+    )
+
+
+def run_benchmark_only(config):
+    """Generate only the PheVal benchmarking outputs with Polars."""
+    pd2tools.log("Running benchmark-only post processing")
+    _run_post_process_step(
+        config,
+        ".directories_created",
+        create_post_process_dirs,
+        "Creating post-processing directories...",
+        "Created post-processing directories successfully.",
+        "Directories created successfully.",
+        "Creating directories failed",
+    )
+    _run_post_process_step(
+        config,
+        ".benchmark_resources_downloaded",
+        download_benchmark_resources,
+        "Downloading benchmarking resources...",
+        "Downloaded benchmarking resources successfully.",
+        "Benchmarking resources downloaded successfully.",
+        "Downloading benchmarking resources failed",
+    )
+    _run_post_process_step(
+        config,
+        ".benchmarking_complete",
+        run_benchmarking_analysis,
+        "Writing PheVal benchmarking outputs with Polars...",
+        "PheVal benchmarking outputs written successfully.",
+        "PheVal benchmarking outputs written successfully.",
+        "Writing PheVal benchmarking outputs failed",
     )
 
 
@@ -331,3 +368,29 @@ def download_resources(config):
 
     # The input versions intentionally remain flexible and cannot all be
     # determined when the main database build starts.
+
+
+def download_benchmark_resources(config):
+    """Download only the orthology mapping required by benchmarking."""
+    orthology = downloads_dict(impc_data_release="latest")["orthology"]
+    target = post_process_paths(config)[orthology["targetdir"]] / orthology["filename"]
+    if target.is_file():
+        pd2tools.log(f"Skipping benchmarking resource: {target} (already exists)")
+        return
+    download_data(orthology["url"], target)
+
+
+def run_benchmarking_analysis(config):
+    """Write only the PheVal benchmarking outputs using the Polars pipeline."""
+    paths = post_process_paths(config)
+    _, data_raw_dir, _, _ = pd2tools.getPD2dirs(config)
+    return benchmark.write_benchmark_files(
+        dbfile=config.dbfile,
+        statistical_results_path=(
+            Path(data_raw_dir, "annotations", "IMPC_ALL_statistical_results_dev.csv.gz")
+        ),
+        orthologs_path=Path(paths["data_aux"], "one_to_one_orthologs.tsv"),
+        output_dir=paths["output"],
+        phenodigm_min_perc=config.phenodigm_min_perc,
+        phenodigm_min_raw=config.phenodigm_min_raw,
+    )

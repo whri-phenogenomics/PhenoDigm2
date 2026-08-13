@@ -141,8 +141,14 @@ class PhenoDigm:
         tools.log("Done")
         return self
 
-    def post_process(self, **overrides):
-        """Run the post-processing workflow (CLI action ``post-process``)."""
+    def post_process(self, *, benchmark_only=None, **overrides):
+        """Run post-processing, optionally writing only PheVal benchmarks.
+
+        Pass ``benchmark_only=True`` to use the Polars benchmarking path and
+        skip the independent R portal-analysis workflow.
+        """
+        if benchmark_only is not None:
+            overrides["benchmark_only"] = benchmark_only
         config = self._config("post-process", **overrides)
         tools.log("Starting PhenoDigm2 [post-process]")
         prep.runDirPrep(config)

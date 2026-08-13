@@ -108,7 +108,7 @@ uv run phenodigm parquet --db vTODAY
 | `parquet()` | `parquet` | Export the Parquet document bundle |
 | `solr_prepare()` | `solr-prepare` | Prepare an optional local Solr bundle |
 | `solr()` | `solr` | Build an optional local Solr core |
-| `post_process()` | `post-process` | Optional R post-processing |
+| `post_process()` | `post-process` | Optional R post-processing; pass `benchmark_only=True` / `--benchmark-only` for Polars-only PheVal outputs |
 | `status()` | `status` | Report build status |
 | `query()` / `compute()` / `export()` | `query` / `compute` / `export` | Inspect / export a built db |
 
