@@ -4,7 +4,7 @@
 ### 2) different IMPC files from the ftp repository
 ### 3) Auxiliary files and scripts: orthologue mapping and symbol checker
 ### https://www.gentar.org/orthology-api/api/ortholog/one_to_one/impc/write_to_tsv_file
-### http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/release-22.0/results/
+### http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/latest/results/
 
 
 # Set library path for the interpreter

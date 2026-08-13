@@ -7,5 +7,5 @@
 # R version) without modifying the installed package.
 #
 # omim_curation_path: "/path/to/omim_curation.tsv"
-# main_r_script_path: "/path/to/DR_22_Update_DM_pipeline.R"
+# main_r_script_path: "/path/to/post_processing_DM_pipeline.R"
 # hgnc_symbol_checker_script_path: "/path/to/hgnc_symbol_checker.R"

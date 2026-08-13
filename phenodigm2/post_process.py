@@ -254,7 +254,7 @@ def relocate_external_resources(config):
     )
     _copy_input(
         post_proc_paths.main_r_script_path,
-        rscripts / "DR_22_Update_DM_pipeline.R",
+        rscripts / "post_processing_DM_pipeline.R",
         output_path["scripts"],
     )
     _copy_input(
@@ -267,7 +267,7 @@ def relocate_external_resources(config):
 def run_post_processing_analysis(config):
     # Locate the script
     r_script_path = Path(
-        post_process_paths(config)["scripts"], "DR_22_Update_DM_pipeline.R"
+        post_process_paths(config)["scripts"], "post_processing_DM_pipeline.R"
     )
 
     # Post process path for the script to execute:
