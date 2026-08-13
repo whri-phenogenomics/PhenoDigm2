@@ -155,22 +155,10 @@ def downloads_dict(impc_data_release: str = "latest"):
             "filename": "one_to_one_orthologs.tsv",
             "targetdir": "data_aux",
         },
-        # TODO: Instead of downloading Move from vTODAY/data_raw/annotations/to where it's needed OR create a symlink (preferable)
-        "impc_geno_pheno_assertions": {
-            "url": f"http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/{impc_data_release}/results/genotype-phenotype-assertions-ALL.csv.gz",
-            "filename": "genotype-phenotype-assertions-ALL.csv.gz",
-            "targetdir": "impc",
-        },
         # NOTE: In the future, in airflow, this might be available locally.
         "impc_viability": {
             "url": f"http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/{impc_data_release}/results/viability.csv.gz",
             "filename": "viability.csv.gz",
-            "targetdir": "impc",
-        },
-        # TODO: Instead of downloading Move from vTODAY/data_raw/annotations/to where it's needed OR create a symlink (preferable)
-        "impc_stat_result": {
-            "url": f"http://ftp.ebi.ac.uk/pub/databases/impc/all-data-releases/{impc_data_release}/results/statistical-results-ALL.csv.gz",
-            "filename": "statistical-results-ALL.csv.gz",
             "targetdir": "impc",
         },
         "hpo_gene_to_pheno": {
@@ -296,15 +284,33 @@ def relocate_external_resources(config):
 
 
 def run_post_processing_analysis(config):
+    """Run the R analysis with explicit working and canonical input paths."""
     # Locate the script
     r_script_path = Path(
         post_process_paths(config)["scripts"], "post_processing_DM_pipeline.R"
     )
 
-    # Post process path for the script to execute:
     post_proc_dir = _get_post_proc_dir(config)
+    _, data_raw_dir, _, _ = pd2tools.getPD2dirs(config)
+    annotations_dir = Path(data_raw_dir, "annotations")
+    required_inputs = (
+        annotations_dir / "IMPC_ALL_genotype_phenotype_dev.csv.gz",
+        annotations_dir / "IMPC_ALL_statistical_results_dev.csv.gz",
+    )
+    missing_inputs = [path for path in required_inputs if not path.is_file()]
+    if missing_inputs:
+        missing = ", ".join(str(path) for path in missing_inputs)
+        raise FileNotFoundError(
+            f"Missing canonical post-processing input(s): {missing}. "
+            "Run the download stage before post-process."
+        )
 
-    command = ["Rscript", str(r_script_path), str(post_proc_dir)]
+    command = [
+        "Rscript",
+        str(r_script_path),
+        str(post_proc_dir),
+        str(annotations_dir),
+    ]
     subprocess.run(command, text=True, check=True)
 
 

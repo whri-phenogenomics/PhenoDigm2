@@ -112,6 +112,8 @@ basic contents with the previous IMPC release, paying particular attention to:
 - the Phenio/Semsimian archives;
 - OMIM files, which should contain data rather than an API error;
 - `data_raw/annotations/human_mouse_mapping.txt.gz`; and
+- `data_raw/annotations/IMPC_ALL_genotype_phenotype_dev.csv.gz` and
+  `data_raw/annotations/IMPC_ALL_statistical_results_dev.csv.gz`;
 - the main IMPC, MGI, HGNC, Ensembl, Orphanet, and ontology inputs.
 
 ### 4. Build the database
@@ -246,7 +248,9 @@ portal and PheVal benchmarking. It requires at least one core with 32 GB RAM and
 a compatible R environment.
 
 The OMIM curation file and bundled R scripts are copied into the release at run
-time, so the workflow needs no extra resource-path configuration:
+time. The two existing IMPC annotation files are read directly from
+`vTODAY/data_raw/annotations`, so the workflow needs no extra resource-path
+configuration:
 
 ```bash
 module load R/4.4.1

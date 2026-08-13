@@ -10,10 +10,15 @@
 # Set library path for the interpreter
 .libPaths('/data/WHRI-Phenogenomics/projects/PhenoDigm2/post_processing_dependencies/r_lib_paths/R/x86_64-pc-linux-gnu-library/4.4.1')
 
-# Intake CLI arguments Here we pass the absolute path to the phenodigm DB
-
+# Intake CLI arguments: post-processing workspace and canonical annotations
 args <- commandArgs(trailingOnly = TRUE)
-post_processing_path <- args[1]
+if (length(args) != 2) {
+  stop(
+    "Expected arguments: <post_processing_path> <data_raw_annotations_path>"
+  )
+}
+post_processing_path <- normalizePath(args[1], mustWork = TRUE)
+annotations_path <- normalizePath(args[2], mustWork = TRUE)
 
 
 # Install/Load packages as needed 
@@ -132,7 +137,9 @@ gene_disease_orthologs <- gene_disease %>%
 
 # import impc data: phenotype associations, viability, all -----------------
 # "Cache" assertions
-geno_pheno_assertions <- fread("./data/impc/genotype-phenotype-assertions-ALL.csv.gz") 
+geno_pheno_assertions <- fread(
+  file.path(annotations_path, "IMPC_ALL_genotype_phenotype_dev.csv.gz")
+)
 
 # Log total number of genes with geno-pheno
 log_event(genes_with_geno_pheno_assertions = length(unique(geno_pheno_assertions$marker_accession_id)))
@@ -194,7 +201,9 @@ viability <- read_delim("./data/impc/viability.csv.gz",
   distinct()
 
 # "Cache" stats results
-stats_all <- fread("./data/impc/statistical-results-ALL.csv.gz")
+stats_all <- fread(
+  file.path(annotations_path, "IMPC_ALL_statistical_results_dev.csv.gz")
+)
 
 # TODO: Log this in the future, not useful right now.
 length(unique(stats_all$marker_accession_id))
