@@ -38,6 +38,9 @@ Solr and Parquet share two document-filtering options:
 `output_min_ontology_ontology_score` thresholds `sqrt(simJ * ic)` mappings, and
 `output_min_disease_model_2d_score` thresholds the combined average/max raw score
 used for computed disease-model associations (CLI: the `--output_min_*` flags).
+The ontology threshold is also applied to the source `phenodigm_score` when the
+earlier `ontology_mapping` action creates its internal mapping caches. Existing
+mapping caches are reused rather than re-filtered when this option changes.
 
 ## Shared document pipeline
 

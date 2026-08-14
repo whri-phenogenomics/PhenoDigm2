@@ -21,11 +21,12 @@ SOURCE_COLUMNS = (
     "object_id",
     "jaccard_similarity",
     "ancestor_information_content",
+    "phenodigm_score",
     "ancestor_id",
 )
 
 
-def make_config(tmp_path, min_ic=2.5):
+def make_config(tmp_path, min_ic=2.5, min_phenodigm_score=1.5):
     root = tmp_path / "build"
     raw_ontology_dir = root / "data_raw" / "obo"
     processed_dir = root / "data_processed"
@@ -48,6 +49,7 @@ def make_config(tmp_path, min_ic=2.5):
         db=str(root),
         dbfile=str(db_file),
         ontology_mapping_min_ic=min_ic,
+        output_min_ontology_ontology_score=min_phenodigm_score,
     )
 
 
@@ -68,7 +70,7 @@ def read_mapping_rows(db_file):
         ).fetchall()
 
 
-def test_transform_writes_filtered_db_shaped_parquet(tmp_path):
+def test_transform_writes_filtered_db_shaped_parquet(tmp_path, capsys):
     config = make_config(tmp_path)
     archive_path = (
         Path(config.db) / "data_raw" / "obo" / "HP_vs_HP_semsimian_phenio.tsv.tar.gz"
@@ -76,12 +78,17 @@ def test_transform_writes_filtered_db_shaped_parquet(tmp_path):
     write_phenio_archive(
         archive_path,
         [
-            ("HP:0001", "HP:0002", "0.75", "3.0", " HP:0000 "),
-            ("HP:0003", "HP:0004", "0.25", "2.49", "HP:0005"),
+            ("HP:0001", "HP:0002", "0.75", "3.0", "1.5", " HP:0000 "),
+            ("HP:0003", "HP:0004", "0.25", "2.49", "2.0", "HP:0005"),
+            ("HP:0006", "HP:0007", "0.5", "3.0", "1.49", "HP:0008"),
         ],
     )
 
     transform_one_ontology_mapping_file(config, "hp-hp")
+
+    output = capsys.readouterr().out
+    assert "ontology_mapping_min_ic=2.5" in output
+    assert "output_min_ontology_ontology_score=1.5" in output
 
     output_path = Path(config.db) / "data_processed" / "phenio-cache-hp-hp.parquet"
     assert output_path.is_file()
@@ -154,11 +161,11 @@ def test_run_processes_archives_through_parquet_into_sqlite(tmp_path):
     ontology_dir = Path(config.db) / "data_raw" / "obo"
     write_phenio_archive(
         ontology_dir / "HP_vs_HP_semsimian_phenio.tsv.tar.gz",
-        [("HP:0001", "HP:0002", "0.8", "3.0", "HP:0000")],
+        [("HP:0001", "HP:0002", "0.8", "3.0", "2.0", "HP:0000")],
     )
     write_phenio_archive(
         ontology_dir / "HP_vs_MP_semsimian_phenio.tsv.tar.gz",
-        [("HP:0003", "MP:0004", "0.6", "4.0", "UPHENO:0001")],
+        [("HP:0003", "MP:0004", "0.6", "4.0", "2.0", "UPHENO:0001")],
     )
 
     run_ontology_mapping_processing(config)
@@ -181,11 +188,11 @@ def test_run_is_idempotent_across_reruns(tmp_path):
     ontology_dir = Path(config.db) / "data_raw" / "obo"
     write_phenio_archive(
         ontology_dir / "HP_vs_HP_semsimian_phenio.tsv.tar.gz",
-        [("HP:0001", "HP:0002", "0.8", "3.0", "HP:0000")],
+        [("HP:0001", "HP:0002", "0.8", "3.0", "2.0", "HP:0000")],
     )
     write_phenio_archive(
         ontology_dir / "HP_vs_MP_semsimian_phenio.tsv.tar.gz",
-        [("HP:0003", "MP:0004", "0.6", "4.0", "UPHENO:0001")],
+        [("HP:0003", "MP:0004", "0.6", "4.0", "2.0", "UPHENO:0001")],
     )
 
     run_ontology_mapping_processing(config)
@@ -207,9 +214,17 @@ def test_transform_drops_rows_with_unparseable_scores(tmp_path):
     write_phenio_archive(
         archive_path,
         [
-            ("HP:0001", "HP:0002", "0.75", "3.0", "HP:0000"),
-            ("HP:0003", "HP:0004", "0.5", "not_a_number", "HP:0005"),
-            ("HP:0006", "HP:0007", "bad", "3.0", "HP:0008"),
+            ("HP:0001", "HP:0002", "0.75", "3.0", "2.0", "HP:0000"),
+            (
+                "HP:0003",
+                "HP:0004",
+                "0.5",
+                "not_a_number",
+                "2.0",
+                "HP:0005",
+            ),
+            ("HP:0006", "HP:0007", "bad", "3.0", "2.0", "HP:0008"),
+            ("HP:0009", "HP:0010", "0.5", "3.0", "bad", "HP:0011"),
         ],
     )
 

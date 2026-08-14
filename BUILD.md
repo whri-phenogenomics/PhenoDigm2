@@ -117,14 +117,39 @@ uv run phenodigm ontology_mapping --db vTODAY
 ```
 
 The action transforms the downloaded Phenio/Semsimian HP-to-HP and HP-to-MP
-files, filters them by information content, and loads the mappings into SQLite.
-To change the default IC threshold, use:
+files, filters them by information content and the source `phenodigm_score`, and
+loads the mappings into SQLite. The `phenodigm_score` value is used only for
+filtering and is not written to the generated Parquet caches or SQLite table.
+
+The default minimum ontology-ontology score is `1.5`. To select another value
+with the Python API:
+
+```python
+pd.ontology_mapping(output_min_ontology_ontology_score=2.0)
+```
+
+The equivalent CLI invocation is:
+
+```bash
+uv run phenodigm ontology_mapping \
+  --output_min_ontology_ontology_score 2.0 \
+  --db vTODAY
+```
+
+The score threshold can be combined with a non-default information-content
+threshold:
 
 ```bash
 uv run phenodigm ontology_mapping \
   --ontology_mapping_min_ic <IC> \
+  --output_min_ontology_ontology_score <SCORE> \
   --db vTODAY
 ```
+
+These filters are applied when each `phenio-cache-*.parquet` file is created.
+An existing cache is reused and logged as `Skipping`, so changing either flag
+alone does not rebuild or re-filter that cache. Cache-generation logs record the
+thresholds that were applied.
 
 `ontology_mapping` is the positional action. The similarly named
 `--ontology_mapping` option configures an executable and is not the action

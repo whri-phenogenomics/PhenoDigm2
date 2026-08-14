@@ -131,13 +131,34 @@ populate the SQLite tables before ontology mappings and scores can be loaded.
 uv run phenodigm ontology_mapping --db vTODAY
 ```
 
-If the release requires a different information-content threshold:
+The mapping stage filters the source `phenodigm_score` at a default minimum of
+`1.5`. To use another ontology-ontology score threshold:
+
+```bash
+uv run phenodigm ontology_mapping \
+  --output_min_ontology_ontology_score 2.0 \
+  --db vTODAY
+```
+
+The equivalent Python call is:
+
+```python
+pd.ontology_mapping(output_min_ontology_ontology_score=2.0)
+```
+
+The score and information-content thresholds can be set together:
 
 ```bash
 uv run phenodigm ontology_mapping \
   --ontology_mapping_min_ic <IC> \
+  --output_min_ontology_ontology_score <SCORE> \
   --db vTODAY
 ```
+
+The score column is used only for filtering and is not stored in the generated
+Parquet cache or SQLite table. Existing `phenio-cache-*.parquet` files are
+reused, so changing a threshold does not affect an already-created cache. The
+cache-generation log records the thresholds used for the release.
 
 ### 6. Score disease-model associations
 
