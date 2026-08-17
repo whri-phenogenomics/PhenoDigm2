@@ -761,9 +761,8 @@ impc_match = genes_pheno_hpo_nomatch_match %>%
   filter(phenodigm_match == "y")
 
 
-model_nonimpc_disease_omim_score_no0 <- open_dataset(
-  "./data/phenodigm/disease_model_association_omim_nonimpc.parquet",
-  format = "parquet"
+model_nonimpc_disease_omim_score_no0 <- read_parquet(
+  "./data/phenodigm/disease_model_association_omim_nonimpc.parquet"
 ) %>%
   mutate(score =(score_avg_norm + score_max_norm)/2) %>%
   filter(score > 0) %>%
@@ -778,9 +777,8 @@ model_nonimpc_disease_omim_score_no0 <- open_dataset(
   collect()
 
 
-model_nonimpc_disease_orphanet_score_no0 <- open_dataset(
-  "./data/phenodigm/disease_model_association_orphanet_nonimpc.parquet",
-  format = "parquet"
+model_nonimpc_disease_orphanet_score_no0 <- read_parquet(
+  "./data/phenodigm/disease_model_association_orphanet_nonimpc.parquet"
 ) %>%
   mutate(score =(score_avg_norm + score_max_norm)/2) %>%
   filter(score > 0) %>%
