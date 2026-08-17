@@ -24,7 +24,7 @@
   "IMPC_gp": {
 	"comment": "IMPC phenotype annotations via live www",
     "query": [""],
-	"url": "http://www.ebi.ac.uk/mi/impc/solr/genotype-phenotype/select?q=*:*&wt=csv&rows=20000000&fl=resource_name,strain_name,marker_accession_id,marker_symbol,allele_accession_id,allele_symbol,zygosity,mp_term_id,mp_term_name,p_value,life_stage_acc,life_stage_name",
+	"url": "http://www.ebi.ac.uk/mi/impc/solr/genotype-phenotype/select?q=*:*&wt=csv&rows=20000000&fl=resource_name,strain_name,marker_accession_id,marker_symbol,allele_accession_id,allele_symbol,zygosity,top_level_mp_term_id,top_level_mp_term_name,mp_term_id,mp_term_name,p_value,life_stage_acc,life_stage_name",
 	"targetdir": "annotations",
 	"filename": ["IMPC_ALL_genotype_phenotype.csv"]
   },
@@ -38,7 +38,7 @@
   "IMPCdev_gp": {
     "comment": "Mouse phenotype annotations via dev",
     "query": [""],
-  	"url": "http://wwwdev.ebi.ac.uk/mi/impc/dev/solr/genotype-phenotype/select?q=*:*&wt=csv&rows=20000000&fl=resource_name,strain_name,marker_accession_id,marker_symbol,allele_accession_id,allele_symbol,zygosity,mp_term_id,mp_term_name,p_value,life_stage_acc,life_stage_name",
+	"url": "http://wwwdev.ebi.ac.uk/mi/impc/dev/solr/genotype-phenotype/select?q=*:*&wt=csv&rows=20000000&fl=resource_name,strain_name,marker_accession_id,marker_symbol,allele_accession_id,allele_symbol,zygosity,top_level_mp_term_id,top_level_mp_term_name,mp_term_id,mp_term_name,p_value,life_stage_acc,life_stage_name",
   	"targetdir": "annotations",  	
   	"filename": ["IMPC_ALL_genotype_phenotype_dev.csv"]
   },
