@@ -21,7 +21,7 @@ PHENODIGM_SCORE, ANCESTOR_ID = "phenodigm_score", "ancestor_id"
 
 # Cache file handles for the columns the transform/load logic names directly.
 QUERY, MATCH = "query", "match"
-SIMJ, IC, LCS = "simJ", "ic", "lcs"
+PD, SIMJ, IC, LCS = "pd", "simJ", "ic", "lcs"
 
 PHENIO_SCHEMA = pl.Schema(
     {
@@ -40,6 +40,7 @@ CACHE_SCHEMA = pl.Schema(
         MATCH: pl.String,
         SIMJ: pl.Float64,
         IC: pl.Float64,
+        PD: pl.Float64,
         LCS: pl.String,
     }
 )
@@ -49,6 +50,7 @@ EQUIVALENCE_SCHEMA = {
     OBJECT_ID: MATCH,
     JACCARD_SIMILARITY: SIMJ,
     ANCESTOR_INFORMATION_CONTENT: IC,
+    PHENODIGM_SCORE: PD,
     ANCESTOR_ID: LCS,
 }
 
@@ -198,7 +200,13 @@ def load_one_ontology_cache_file(config, onto_pair):
         else pl.col(column).cast(data_type)
         for column, data_type in CACHE_SCHEMA.items()
     ]
-    canonical = source.select(normalized_columns).filter(pl.col(MATCH) >= pl.col(QUERY))
+
+    # DROP PD - not needed for db
+    canonical = (
+        source.select(normalized_columns)
+        .drop(PD)
+        .filter(pl.col(MATCH) >= pl.col(QUERY))
+    )
     reversed_rows = canonical.filter(pl.col(QUERY) != pl.col(MATCH)).select(
         pl.col(MATCH).alias(QUERY),
         pl.col(QUERY).alias(MATCH),

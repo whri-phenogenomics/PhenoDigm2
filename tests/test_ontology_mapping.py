@@ -70,7 +70,7 @@ def read_mapping_rows(db_file):
         ).fetchall()
 
 
-def test_transform_writes_filtered_db_shaped_parquet(tmp_path, capsys):
+def test_transform_writes_filtered_cache_parquet(tmp_path, capsys):
     config = make_config(tmp_path)
     archive_path = (
         Path(config.db) / "data_raw" / "obo" / "HP_vs_HP_semsimian_phenio.tsv.tar.gz"
@@ -99,10 +99,11 @@ def test_transform_writes_filtered_db_shaped_parquet(tmp_path, capsys):
             "match": pl.String,
             "simJ": pl.Float64,
             "ic": pl.Float64,
+            "pd": pl.Float64,
             "lcs": pl.String,
         }
     )
-    assert result.rows() == [("HP:0001", "HP:0002", 0.75, 3.0, "HP_0000;")]
+    assert result.rows() == [("HP:0001", "HP:0002", 0.75, 3.0, 1.5, "HP_0000;")]
 
 
 def test_loader_normalizes_mirrors_and_preserves_duplicates(tmp_path, monkeypatch):
@@ -114,6 +115,7 @@ def test_loader_normalizes_mirrors_and_preserves_duplicates(tmp_path, monkeypatc
             "match": [" MP:0001 ", "AA:0001", "SELF", " MP:0001 "],
             "simJ": ["0.5", "0.2", "1.0", "0.5"],
             "ic": ["3.0", "4.0", "5.0", "3.0"],
+            "pd": ["1.5", "2.0", "3.0", "1.5"],
             "lcs": [" HP_0000; ", "DROP;", " SELF; ", " HP_0000; "],
         }
     ).write_parquet(cache_path)
@@ -233,4 +235,4 @@ def test_transform_drops_rows_with_unparseable_scores(tmp_path):
 
     output_path = Path(config.db) / "data_processed" / "phenio-cache-hp-hp.parquet"
     result = pl.read_parquet(output_path)
-    assert result.rows() == [("HP:0001", "HP:0002", 0.75, 3.0, "HP_0000;")]
+    assert result.rows() == [("HP:0001", "HP:0002", 0.75, 3.0, 2.0, "HP_0000;")]
