@@ -455,12 +455,10 @@ log_event(score_disease_associated_iqr = summary_stats_associated$iqr)
 # export files for shiny app ----------------------------------------------
 
 write_parquet(phenodigm_matches_impc,
-              "./data/output/phenodigm_matches_full.parquet",
-              compression="zstd", compression_level=5)
+              "./data/output/phenodigm_matches_full.parquet")
 
 write_parquet(matches_tidy,
-              "./data/output/phenodigm_matches.parquet",
-              compression="zstd", compression_level=5)
+              "./data/output/phenodigm_matches.parquet")
 
 # gene summary file -------------------------------------------------------
 
@@ -492,8 +490,7 @@ filter_matches <- gene_summary_df %>%
 # export gene summary file ------------------------------------------------
 
 write_parquet(gene_summary_df,
-              "./data/output/gene_summary.parquet",
-              compression="zstd", compression_level=5)
+              "./data/output/gene_summary.parquet")
 
 write.fst(gene_summary_df, "./data/output/gene_summary.fst")
 
@@ -731,7 +728,7 @@ violin_score_predicted <- ggplot(model_no0_nodisease_dist, aes(x = 0, y = score)
 violin_score_predicted
 
 write_parquet(model_no0_nodisease,
-              "./data/output/phenodigm_other.parquet", compression="zstd", compression_level=5)
+              "./data/output/phenodigm_other.parquet")
 
 # PhenoDigm other is getting quite large, we can split in multiple files under 50MB to comply with GitHub enterprise's limits.
 # 1. Calculate the number of rows per chunk needed to fit the required file size.
@@ -1015,10 +1012,8 @@ top_genes_impc_models_tidy <- top_genes_impc_models %>%
 
 # Write all models file
 write_parquet(top_genes_all_models_tidy,
-              "./data/output/phenodigm_scores_benchmarking_all_models.parquet",
-              compression="zstd", compression_level=5)
+              "./data/output/phenodigm_scores_benchmarking_all_models.parquet")
 
 # Write impc models only file
 write_parquet(top_genes_impc_models_tidy,
-              "./data/output/phenodigm_scores_benchmarking_impc_models.parquet",
-              compression="zstd", compression_level=5)
+              "./data/output/phenodigm_scores_benchmarking_impc_models.parquet")
