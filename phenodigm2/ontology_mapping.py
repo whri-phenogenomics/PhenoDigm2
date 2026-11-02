@@ -66,7 +66,7 @@ def transform_one_ontology_mapping_file(config, onto_pair):
     # Makeshift name matching:
     file_matching = {
         "hp-hp": "HP_vs_HP_semsimian_phenio.tsv.tar.gz",
-        "hp-mp": "HP_vs_MP_semsimian_phenio.tsv.tar.gz",
+        "hp-mp": "HP_vs_MP_semsimian_phenio_kg-2026-09-04.tsv.tar.gz",
     }
 
     # Validate before indexing the mapping so callers see the supported pairs

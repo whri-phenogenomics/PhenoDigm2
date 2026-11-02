@@ -96,6 +96,24 @@ The equivalent command that preserves the URL list in a file is:
 uvx zenodo_get -w zenodo_urls 18474575
 ```
 
+> **DR25 note (temporary).** For DR25 the Semsimian archives are downloaded
+> directly from Monarch Initiative instead of Zenodo, so skip the record-ID
+> update above. The bundled `dependencies.json` points `semsimian.url` at
+> `https://data.monarchinitiative.org/pheno-comparisons/2026-09-29/`, and the
+> HP-to-MP archive keeps its Monarch name,
+> `HP_vs_MP_semsimian_phenio_kg-2026-09-04.tsv.tar.gz`. That name is hardcoded
+> in two places that must stay in sync:
+>
+> - the `semsimian` `filename` list in `dependencies.json`;
+> - the `"hp-mp"` entry of `file_matching` in `phenodigm2/ontology_mapping.py`.
+>
+> Because `ontology_mapping.py` is package code, changing the HP-to-MP name
+> requires a code change, not only an edit to the release bundle. When
+> switching back to Zenodo, restore
+> `"url": "https://zenodo.org/api/records/<RECORD_ID>/files/{filename}/content"`,
+> the filename `HP_vs_MP_semsimian_phenio.tsv.tar.gz`, and the matching
+> `"hp-mp"` value in `ontology_mapping.py`.
+
 Review all entries in the release copy of `dependencies.json` before the
 download. Updating the source file under `phenodigm2/resources` is unnecessary for a
 one-off release and would not change an already initialized bundle.

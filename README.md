@@ -57,6 +57,10 @@ update its ID in `vTODAY/resources/dependencies.json`:
 uvx zenodo_get -w - 18474575
 ```
 
+> **DR25 note (temporary):** DR25 downloads the Semsimian archives directly
+> from Monarch Initiative instead of Zenodo, so this step is skipped. See
+> [BUILD.md](BUILD.md#2-check-the-phenio-zenodo-record) for details.
+
 **3. Run the pipeline** in either form below.
 
 ### Python API (primary)

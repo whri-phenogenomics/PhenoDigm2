@@ -83,6 +83,22 @@ To keep the URL list for release records instead, use:
 uvx zenodo_get -w zenodo_urls 18474575
 ```
 
+> **DR25 note (temporary).** For DR25 the Semsimian archives are downloaded
+> directly from Monarch Initiative instead of Zenodo, so skip the record-ID
+> update above. The bundled `dependencies.json` points `semsimian.url` at
+> `https://data.monarchinitiative.org/pheno-comparisons/2026-09-29/`, and the
+> HP-to-MP archive keeps its Monarch name,
+> `HP_vs_MP_semsimian_phenio_kg-2026-09-04.tsv.tar.gz`. That name is hardcoded
+> in two places that must stay in sync:
+>
+> - the `semsimian` `filename` list in `dependencies.json`;
+> - the `"hp-mp"` entry of `file_matching` in `phenodigm2/ontology_mapping.py`.
+>
+> When switching back to Zenodo, restore
+> `"url": "https://zenodo.org/api/records/<RECORD_ID>/files/{filename}/content"`,
+> the filename `HP_vs_MP_semsimian_phenio.tsv.tar.gz`, and the matching
+> `"hp-mp"` value in `ontology_mapping.py`.
+
 Review the other dependency URLs before continuing. If OMIM downloads are
 required, provide a valid API key in the environment:
 

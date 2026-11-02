@@ -134,6 +134,12 @@ Before downloading release resources:
 
 - Resolve Zenodo concept record `18474575` and update the version-specific
   Semsimian record ID in the initialized bundle's `resources/dependencies.json`.
+  - Temporary DR25 exception: Semsimian archives come directly from
+    `https://data.monarchinitiative.org/pheno-comparisons/2026-09-29/`, not
+    Zenodo, so skip the record-ID update. The HP-to-MP archive name
+    `HP_vs_MP_semsimian_phenio_kg-2026-09-04.tsv.tar.gz` is hardcoded in both
+    `dependencies.json` and the `"hp-mp"` entry in
+    `phenodigm2/ontology_mapping.py`; keep them in sync. See `BUILD.md`.
 - Review the remaining dependency URLs.
 - Ensure `OMIM_API_KEY` is set when OMIM files are required.
 - Validate downloads against a previous release before continuing.

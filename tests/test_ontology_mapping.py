@@ -166,7 +166,7 @@ def test_run_processes_archives_through_parquet_into_sqlite(tmp_path):
         [("HP:0001", "HP:0002", "0.8", "3.0", "2.0", "HP:0000")],
     )
     write_phenio_archive(
-        ontology_dir / "HP_vs_MP_semsimian_phenio.tsv.tar.gz",
+        ontology_dir / "HP_vs_MP_semsimian_phenio_kg-2026-09-04.tsv.tar.gz",
         [("HP:0003", "MP:0004", "0.6", "4.0", "2.0", "UPHENO:0001")],
     )
 
@@ -193,7 +193,7 @@ def test_run_is_idempotent_across_reruns(tmp_path):
         [("HP:0001", "HP:0002", "0.8", "3.0", "2.0", "HP:0000")],
     )
     write_phenio_archive(
-        ontology_dir / "HP_vs_MP_semsimian_phenio.tsv.tar.gz",
+        ontology_dir / "HP_vs_MP_semsimian_phenio_kg-2026-09-04.tsv.tar.gz",
         [("HP:0003", "MP:0004", "0.6", "4.0", "2.0", "UPHENO:0001")],
     )
 
