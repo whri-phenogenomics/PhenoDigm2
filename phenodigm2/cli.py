@@ -200,7 +200,10 @@ def build_parser():
         "--output_min_ontology_ontology_score",
         action="store",
         type=float,
-        help="minimum sqrt(simJ * ic) ontology-ontology mapping score",
+        help=(
+            "minimum Phenio phenodigm_score during ontology mapping and "
+            "minimum sqrt(simJ * ic) for ontology-ontology outputs"
+        ),
         default=1.5,
     )
     parser.add_argument(

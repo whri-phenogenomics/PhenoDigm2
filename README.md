@@ -137,14 +137,29 @@ Inspect a completed database — `pd.status()`:
 uv run phenodigm status --db vTODAY
 ```
 
-Use a non-default ontology-mapping IC threshold —
-`pd.ontology_mapping(ontology_mapping_min_ic=<IC>)`:
+Use non-default ontology-mapping filters. The ontology-ontology score filters
+the source `phenodigm_score` while creating the cache; that temporary column is
+not persisted:
+
+```python
+pd.ontology_mapping(
+    ontology_mapping_min_ic=3.0,
+    output_min_ontology_ontology_score=2.0,
+)
+```
+
+The equivalent CLI invocation is:
 
 ```bash
 uv run phenodigm ontology_mapping \
   --ontology_mapping_min_ic <IC> \
+  --output_min_ontology_ontology_score <SCORE> \
   --db vTODAY
 ```
+
+The default ontology-ontology score threshold is `1.5`. Mapping caches are
+reused when present, so filter changes take effect only when a cache is created;
+the creation log records the applied thresholds.
 
 Prepare and build an optional local Solr core — `pd.solr_prepare()` then
 `pd.solr(solr_url="http://localhost:8984/solr/")`:
