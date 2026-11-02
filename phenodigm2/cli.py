@@ -204,7 +204,7 @@ def build_parser():
             "minimum Phenio phenodigm_score during ontology mapping and "
             "minimum sqrt(simJ * ic) for ontology-ontology outputs"
         ),
-        default=1.5,
+        default=1.0,
     )
     parser.add_argument(
         "--output_min_disease_model_2d_score",
