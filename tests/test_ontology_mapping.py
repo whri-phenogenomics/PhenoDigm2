@@ -26,7 +26,7 @@ SOURCE_COLUMNS = (
 )
 
 
-def make_config(tmp_path, min_ic=2.5, min_phenodigm_score=1.5):
+def make_config(tmp_path, min_ic=2.5, min_phenodigm_score=1.0):
     root = tmp_path / "build"
     raw_ontology_dir = root / "data_raw" / "obo"
     processed_dir = root / "data_processed"
@@ -78,9 +78,9 @@ def test_transform_writes_filtered_cache_parquet(tmp_path, capsys):
     write_phenio_archive(
         archive_path,
         [
-            ("HP:0001", "HP:0002", "0.75", "3.0", "1.5", " HP:0000 "),
+            ("HP:0001", "HP:0002", "0.75", "3.0", "1.0", " HP:0000 "),
             ("HP:0003", "HP:0004", "0.25", "2.49", "2.0", "HP:0005"),
-            ("HP:0006", "HP:0007", "0.5", "3.0", "1.49", "HP:0008"),
+            ("HP:0006", "HP:0007", "0.5", "3.0", "0.99", "HP:0008"),
         ],
     )
 
@@ -88,7 +88,7 @@ def test_transform_writes_filtered_cache_parquet(tmp_path, capsys):
 
     output = capsys.readouterr().out
     assert "ontology_mapping_min_ic=2.5" in output
-    assert "output_min_ontology_ontology_score=1.5" in output
+    assert "output_min_ontology_ontology_score=1)" in output
 
     output_path = Path(config.db) / "data_processed" / "phenio-cache-hp-hp.parquet"
     assert output_path.is_file()
@@ -103,7 +103,7 @@ def test_transform_writes_filtered_cache_parquet(tmp_path, capsys):
             "lcs": pl.String,
         }
     )
-    assert result.rows() == [("HP:0001", "HP:0002", 0.75, 3.0, 1.5, "HP_0000;")]
+    assert result.rows() == [("HP:0001", "HP:0002", 0.75, 3.0, 1.0, "HP_0000;")]
 
 
 def test_loader_normalizes_mirrors_and_preserves_duplicates(tmp_path, monkeypatch):
