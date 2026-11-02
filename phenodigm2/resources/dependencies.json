@@ -65,7 +65,7 @@
   },
   "Orphanet": {
     "comment": "ORPHANET annotations",
-  	"url": "http://www.orphadata.org/data/xml/",
+  	"url": "https://www.orphadata.com/data/xml/",
   	"targetdir": "annotations",
     "filename": ["en_product6.xml", "en_product1.xml",
     	"en_product3_146.xml", "en_product3_147.xml",
